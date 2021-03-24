@@ -22,7 +22,7 @@ import shutil
 class NLP_crawler:
     def __init__(self,query):
         #Build file csv 
-        self.csvfile_input = open(str(query)+'_crawler.csv', 'r',newline='', encoding="utf-8")
+        self.csvfile_input = open(str(query)+'_crawler.csv', 'r',newline='', encoding='utf-8')
         self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
         
         fieldnames = ['10 ranking','number']
@@ -39,9 +39,9 @@ class NLP_crawler:
             print(first)
             if(first > 0):
                 if(lang == "th"):
-                    temp = self.analyze_word_th(row[3],data)
+                    temp = self.analyze_word_th(row[2],data)
                 elif(lang == "en"):
-                    temp = self.analyze_word_en(row[3],data)
+                    temp = self.analyze_word_en(row[2],data)
                 for i in temp:
                     message = i.lower()
                     if( message not in dict_temp ):

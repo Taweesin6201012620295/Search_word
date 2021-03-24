@@ -20,7 +20,7 @@ from NLP import *
 
 from Crawler_file1 import *
 from NLP_crawler import *
-from test_crawler2 import * 
+from Crawler_file2 import * 
 
 from Combine_GUI import*
 
@@ -71,11 +71,11 @@ class search_finance(QWidget):
         self.label_3.setFont(QtGui.QFont("Helvetica",16))
         #QLabel4
         self.label_4 = QLabel('API',self)
-        self.label_4.move(20, 500)
+        self.label_4.move(80, 500)
         self.label_4.setFont(QtGui.QFont("Helvetica",16))
         #QLabel5
         self.label_5 = QLabel('Crawler',self)
-        self.label_5.move(700, 500)
+        self.label_5.move(780, 500)
         self.label_5.setFont(QtGui.QFont("Helvetica",16))
 
         #creating button QPushButton
@@ -106,13 +106,23 @@ class search_finance(QWidget):
         #TextBrower
         self.bro2 = QTextBrowser(self)
         self.bro2.resize(500,500)
-        self.bro2.move(100,500)
+        self.bro2.move(200,500)
         self.bro2.setFont(QtGui.QFont("Helvetica",12))
         #TextBrower
         self.bro3 = QTextBrowser(self)
         self.bro3.resize(500,500)
-        self.bro3.move(800,500)
+        self.bro3.move(900,500)
         self.bro3.setFont(QtGui.QFont("Helvetica",12))
+        #TextBrower
+        self.bro4 = QTextBrowser(self)
+        self.bro4.resize(190,200)
+        self.bro4.move(10,540)
+        self.bro4.setFont(QtGui.QFont("Helvetica",12))
+        #TextBrower
+        self.bro5 = QTextBrowser(self)
+        self.bro5.resize(190,200)
+        self.bro5.move(710,540)
+        self.bro5.setFont(QtGui.QFont("Helvetica",12))
 
         #DateEdit
         self.Year = int(datetime.now().strftime('%Y'))
@@ -197,9 +207,11 @@ class search_finance(QWidget):
     
     def compare(self):
         data = self.inputbox.text()
+        date1 = self.dateEdit.date().toPyDate()
+        date2 = self.dateEdit1.date().toPyDate()
         if re.match('[ก-๙]',data) != None:
             data = self.inputbox.text()
-            api = Twitter_API(data,'th')
+            api = Twitter_API(data,'th',date1,date2)
             api.search()
             crawler = Search_thai_Crawler()
             crawler.get_thai_news(data)
@@ -207,28 +219,31 @@ class search_finance(QWidget):
 
         else:
             data = self.inputbox.text()
-            api = Twitter_API(data,'en')
+            api = Twitter_API(data,'en',date1,date2)
             api.search()
             crawler = Search_Crawler()
-            crawler.get_the_news(data)
+            crawler.get_eng_news(data)
             self.Sentiment(data,'en')
 
     #check sentiment language
-    def Sentiment(self,data,slide):
-        if slide == 'th':
-            self.Sentiment_th(data)
-        elif slide == 'en':
-            self.Sentiment_en(data)
+    def Sentiment(self,data,lan):
+        if lan == 'th':
+            self.Sentiment_api_pickle(data)
+            self.Sentiment_crawler_pickle(data)
+        elif lan == 'en':
+            self.Sentiment_crawler_en(data)
+            self.Sentiment_api_en(data)
 
-    def Sentiment_en(self,data):
-        
+############################ API ############################################
+    def Sentiment_api_en(self,data):
+
         #Part-2: Sentiment Analysis Report
-        df = pd.read_csv(str(data)+'_crawler.csv')
+        df = pd.read_csv(str(data)+'_Data.csv',error_bad_lines=False)
         #Finding sentiment analysis (+ve, -ve and neutral)
         pos = 0
         neg = 0
         neu = 0
-        for tweet in df['Description']:
+        for tweet in df['tweet']:
             analysis = TextBlob(tweet)
             if analysis.sentiment[0]>0:
                 pos = pos +1
@@ -248,15 +263,15 @@ class search_finance(QWidget):
         se.append('Negative',int(neg))
         se.append('Neutral',int(neu))
         
-        '''self.bro6.clear()
-        self.bro6.append(f"Total Positive = {pos}")
-        self.bro6.append(f"Total Negative = {neg}")
-        self.bro6.append(f"Total Neutral = {neu}")
-        self.bro6.append(f"Total All = {tol}")'''
+        self.bro4.clear()
+        self.bro4.append(f"Positive = {pos}")
+        self.bro4.append(f"Negative = {neg}")
+        self.bro4.append(f"Neutral = {neu}")
+        self.bro4.append(f"All = {tol}")
 
         chart = QChart()
         chart.addSeries(se)
-        chart.setTitle("Programming Pie Chart")
+        chart.setTitle("Sentiment"+str(data))
         chartview = QChartView(chart)
         chartview.setGeometry(0,0,600,500)
         chartview.setRenderHint(QPainter.Antialiasing)
@@ -271,10 +286,6 @@ class search_finance(QWidget):
             writer.writerow([pos,neg,neu])
 
     def Sentiment_th(self,data):
-        df = pd.read_csv(str(data)+'_crawler.csv')
-        pos = 0
-        neg = 0
-        neu = 0
 
         # pos.txt
         with codecs.open('pos.txt', 'r', "utf-8") as f:
@@ -303,12 +314,52 @@ class search_finance(QWidget):
         feature_set = [({i:(i in word_tokenize(sentence.lower())) for i in vocabulary},tag) for sentence, tag in training_data]
         classifier = nbc.train(feature_set)
 
-        for tweet in df['Description']:
+        totel = (classifier,vocabulary)
+        return totel
+
+    def storeData(self): 
+        # database 
+        db = self.main_mo()
+        # Its important to use binary mode 
+        dbfile = open('Model', 'wb') 
+        # source, destination
+        pickle.dump(db, dbfile)
+        dbfile.close()
+
+    def loadData(self):
+        # for reading also binary mode is important
+        dbfile = open('Model', 'rb')
+        db = pickle.load(dbfile)
+        dbfile.close()
+        return db
+
+    #analysis th word
+    def analyze_word_th(self, data):
+        words = thai_stopwords()
+        V = []
+        data = re.sub("[0-9]",'',data)
+        data = re.sub("[a-z A-Z]",'',data)
+        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
+        nlp1 = [data for data in nlp if data not in words]
+        for i in nlp1:
+            r = re.sub('\w','',i)
+            if i not in r and data:
+                V.append(i)
+        return V
+
+    def Sentiment_api_pickle(self,data):
+        df = pd.read_csv(str(data)+'_Data.csv',error_bad_lines=False)
+        A = self.loadData()
+        pos = 0
+        neg = 0
+        neu = 0
+
+        for tweet in df['tweet']:
             test_sentence = tweet
-            featurized_test_sentence =  {i:(i in word_tokenize(test_sentence.lower())) for i in vocabulary}
-            if classifier.classify(featurized_test_sentence) == 'pos':
+            featurized_test_sentence =  {i:(i in self.analyze_word_th(test_sentence.lower())) for i in A[1]}
+            if A[0].classify(featurized_test_sentence) == 'pos':
                 pos = pos+1
-            elif classifier.classify(featurized_test_sentence) == 'neg':
+            elif A[0].classify(featurized_test_sentence) == 'neg':
                 neg = neg+1
             else:
                 neu = neu+1
@@ -320,15 +371,178 @@ class search_finance(QWidget):
         se.append('Negative',int(neg))
         se.append('Neutral',int(neu))
 
+        print(" Positive = ", pos)
+        print("Total Negative = ", neg)
+        print("Total Neutral = ", neu)
+
+        self.bro4.clear()
+        self.bro4.append(f"Positive = {pos}")
+        self.bro4.append(f"Negative = {neg}")
+        self.bro4.append(f"Neutral = {neu}")
+        self.bro4.append(f"Total = {tol}")
+
+        chart = QChart()
+        chart.addSeries(se)
+        chart.setTitle("Sentiment"+str(data))
+        chartview = QChartView(chart)
+        chartview.setGeometry(0,0,600,500)
+        chartview.setRenderHint(QPainter.Antialiasing)
+
+        self.savepi = QPixmap(chartview.grab())
+        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png", "PNG")
+        self.bro2.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png);')
+
+        with open(str(data)+'_api_sentiment.csv', 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['pos','neg','neu'])
+            writer.writerow([pos,neg,neu])
+
+############################ Crawler ############################################
+    
+    def Sentiment_crawler_en(self,data):
+        
+        #Part-2: Sentiment Analysis Report
+        df = pd.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
+        #Finding sentiment analysis (+ve, -ve and neutral)
+        pos = 0
+        neg = 0
+        neu = 0
+        for tweet in df['Description']:
+            analysis = TextBlob(tweet)
+            if analysis.sentiment[0]>0:
+                pos = pos +1
+            elif analysis.sentiment[0]<0:
+                neg = neg + 1
+            else:
+                neu = neu + 1
+        tol = pos + neg + neu
+
         print("Total Positive = ", pos)
         print("Total Negative = ", neg)
         print("Total Neutral = ", neu)
 
-        '''self.bro6.clear()
-        self.bro6.append(f"Total Positive = {pos}")
-        self.bro6.append(f"Total Negative = {neg}")
-        self.bro6.append(f"Total Neutral = {neu}")
-        self.bro6.append(f"Total All = {tol}")'''
+        se = QPieSeries()
+
+        se.append('Positive',int(pos))
+        se.append('Negative',int(neg))
+        se.append('Neutral',int(neu))
+        
+        self.bro5.clear()
+        self.bro5.append(f"Positive = {pos}")
+        self.bro5.append(f"Negative = {neg}")
+        self.bro5.append(f"Neutral = {neu}")
+        self.bro5.append(f"All = {tol}")
+
+        chart = QChart()
+        chart.addSeries(se)
+        chart.setTitle("Programming Pie Chart")
+        chartview = QChartView(chart)
+        chartview.setGeometry(0,0,600,500)
+        chartview.setRenderHint(QPainter.Antialiasing)
+
+        self.savepi = QPixmap(chartview.grab())
+        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_crawler.png", "PNG")
+        self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_crawler.png);')
+        
+        with open(str(data)+'_sentiment.csv', 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['pos','neg','neu'])
+            writer.writerow([pos,neg,neu])
+
+    def Sentiment_th(self,data):
+
+        # pos.txt
+        with codecs.open('pos.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listpos=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        # neu.txt
+        with codecs.open('neu.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listneu=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        # neg.txt
+        with codecs.open('neg.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listneg=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        pos1=['pos']*len(listpos)
+        neg1=['neg']*len(listneg)
+        neu1=['neu']*len(listneu)
+
+        training_data = list(zip(listpos,pos1)) + list(zip(listneg,neg1)) + list(zip(listneu,neu1))
+        vocabulary = set(chain(*[word_tokenize(i[0].lower()) for i in training_data]))
+        feature_set = [({i:(i in word_tokenize(sentence.lower())) for i in vocabulary},tag) for sentence, tag in training_data]
+        classifier = nbc.train(feature_set)
+        totel = (classifier,vocabulary)
+        return totel
+
+    def storeData(self): 
+        # database 
+        db = self.main_mo()
+        # Its important to use binary mode 
+        dbfile = open('Model', 'wb') 
+        # source, destination
+        pickle.dump(db, dbfile)
+        dbfile.close()
+
+    def loadData(self):
+        # for reading also binary mode is important
+        dbfile = open('Model', 'rb')
+        db = pickle.load(dbfile)
+        dbfile.close()
+        return db
+    
+    #analysis th word
+    def analyze_word_th(self, data):
+        words = thai_stopwords()
+        V = []
+        data = re.sub("[0-9]",'',data)
+        data = re.sub("[a-z A-Z]",'',data)
+        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
+        nlp1 = [data for data in nlp if data not in words]
+        for i in nlp1:
+            r = re.sub('\w','',i)
+            if i not in r and data:
+                V.append(i)
+        return V
+
+    def Sentiment_crawler_pickle(self,data):
+        df = pd.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
+        A = self.loadData()
+        pos = 0
+        neg = 0
+        neu = 0
+
+        for tweet in df['Description']:
+            test_sentence = tweet
+            featurized_test_sentence =  {i:(i in self.analyze_word_th(test_sentence.lower())) for i in A[1]}
+            if A[0].classify(featurized_test_sentence) == 'pos':
+                pos = pos+1
+            elif A[0].classify(featurized_test_sentence) == 'neg':
+                neg = neg+1
+            else:
+                neu = neu+1
+
+        tol = pos + neg + neu
+        se = QPieSeries()
+ 
+        se.append('Positive',int(pos))
+        se.append('Negative',int(neg))
+        se.append('Neutral',int(neu))
+
+        print("Total Positive = ", pos)
+        print("Total Negative = ", neg)
+        print("Total Neutral = ", neu)
+
+        self.bro5.clear()
+        self.bro5.append(f"Positive = {pos}")
+        self.bro5.append(f"Negative = {neg}")
+        self.bro5.append(f"Neutral = {neu}")
+        self.bro5.append(f"All = {tol}")
 
         chart = QChart()
         chart.addSeries(se)

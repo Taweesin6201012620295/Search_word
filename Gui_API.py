@@ -9,7 +9,8 @@ from PyQt5 import *
 
 import pandas as pd
 import os
-import time
+import os.path, time
+from datetime import time
 from textblob import TextBlob
 import matplotlib.pyplot as plt
 from tempfile import NamedTemporaryFile
@@ -35,19 +36,21 @@ class tweety_search(QWidget):
     def getTextValue(self):
         data = self.inputbox.text()
         slide = self.slide.currentText()
-        self.check_search(data,slide)
+        date1 = self.dateEdit.date().toPyDate()
+        date2 = self.dateEdit1.date().toPyDate()
+        self.check_search(data,slide,date1,date2)
         self.create_piechart(data)
         self.get_time(data)
 
     #check search word
-    def check_search(self,data,slide):
+    def check_search(self,data,slide,date1,date2):
         pan = pandas.read_csv('file_list_API.csv')
         check = str(data)+'.csv'
         store_file = []
         for i in pan['file_name']:
             store_file.append(i)
         if check not in store_file:
-            obj = Twitter_API(data,slide)
+            obj = Twitter_API(data,slide,date1,date2)
             obj.search()
             print("This one :"+data)
             try:
@@ -110,14 +113,6 @@ class tweety_search(QWidget):
         self.label_2 = QLabel('Select your language',self)
         self.label_2.move(20,150)
         self.label_2.setFont(QtGui.QFont("Helvetica",16))
-        #QLabel3
-        self.label_3 = QLabel('At Time',self)
-        self.label_3.move(20,200)
-        self.label_3.setFont(QtGui.QFont("Helvetica",16))
-        #QLabel3
-        #self.label_4 = QLabel('At Place',self)
-        #self.label_4.move(1320,750)
-        #self.label_4.setFont(QtGui.QFont("Helvetica",16))
         #QLabel4
         self.label_5 = QLabel('Results of the tweet you searched',self)
         self.label_5.move(20,300)
@@ -161,11 +156,6 @@ class tweety_search(QWidget):
         self.bro3.resize(500,400)
         self.bro3.move(800,50)
         self.bro3.setFont(QtGui.QFont("Helvetica",12))
-        #TextBrowser
-        self.bro4 = QTextBrowser(self)
-        self.bro4.resize(250,30)
-        self.bro4.move(120,200)
-        self.bro4.setFont(QtGui.QFont("Helvetica",12))
         #TextBrower
         self.bro5 = QTextBrowser(self)
         self.bro5.resize(500,400)
@@ -241,17 +231,15 @@ class tweety_search(QWidget):
         self.savepi = QPixmap(chartview.grab())
         self.savepi.save("C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png", "PNG")
         self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png);')
-        
-        #modTimesinceEpoc = os.path.getmtime(str(data)+'_NLP.csv')
-        #modificationTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modTimesinceEpoc))
-        #self.bro4.clear()
-        #self.bro4.append(modificationTime)
+
 
     #update datetime
     def update_time(self):
         data = self.inputbox.text()
         slide = self.slide.currentText()
-        obj = Twitter_API(data,slide)
+        date1 = self.dateEdit.date().toPyDate()
+        date2 = self.dateEdit1.date().toPyDate()
+        obj = Twitter_API(data,slide,date1,date2)
         obj.search()
         obj1 = NLP(data)
         obj1.save_analysis(slide,data)
@@ -264,12 +252,11 @@ class tweety_search(QWidget):
     #check sentiment language
     def Sentiment(self,data,slide):
         if slide == 'th':
-            self.Sentiment_th(data)
+            self.sentiment_pickel(data)
         elif slide == 'en':
             self.Sentiment_en(data)
     
     def Sentiment_en(self,data):
-        
         #Part-2: Sentiment Analysis Report
         df = pd.read_csv(str(data)+'_Data.csv')
         #Finding sentiment analysis (+ve, -ve and neutral)
@@ -302,7 +289,7 @@ class tweety_search(QWidget):
 
         chart = QChart()
         chart.addSeries(se)
-        chart.setTitle("Programming Pie Chart")
+        chart.setTitle("Sentiment"+str(data))
         chartview = QChartView(chart)
         chartview.setGeometry(0,0,600,500)
         chartview.setRenderHint(QPainter.Antialiasing)
@@ -317,10 +304,6 @@ class tweety_search(QWidget):
             writer.writerow([pos,neg,neu])
     
     def Sentiment_th(self,data):
-        df = pd.read_csv(str(data)+'_Data.csv')
-        pos = 0
-        neg = 0
-        neu = 0
 
         # pos.txt
         with codecs.open('pos.txt', 'r', "utf-8") as f:
@@ -349,12 +332,52 @@ class tweety_search(QWidget):
         feature_set = [({i:(i in word_tokenize(sentence.lower())) for i in vocabulary},tag) for sentence, tag in training_data]
         classifier = nbc.train(feature_set)
 
+        totel = (classifier,vocabulary)
+        return totel
+
+    def storeData(self): 
+        # database 
+        db = self.main_mo()
+        # Its important to use binary mode 
+        dbfile = open('Model', 'wb') 
+        # source, destination
+        pickle.dump(db, dbfile)
+        dbfile.close()
+
+    def loadData(self):
+        # for reading also binary mode is important
+        dbfile = open('Model', 'rb')
+        db = pickle.load(dbfile)
+        dbfile.close()
+        return db
+
+    #analysis th word
+    def analyze_word_th(self, data):
+        words = thai_stopwords()
+        V = []
+        data = re.sub("[0-9]",'',data)
+        data = re.sub("[a-z A-Z]",'',data)
+        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
+        nlp1 = [data for data in nlp if data not in words]
+        for i in nlp1:
+            r = re.sub('\w','',i)
+            if i not in r and data:
+                V.append(i)
+        return V
+
+    def sentiment_pickel(self,data):
+        df = pd.read_csv(str(data)+'_Data.csv')
+        A = self.loadData()
+        pos = 0
+        neg = 0
+        neu = 0
+
         for tweet in df['tweet']:
             test_sentence = tweet
-            featurized_test_sentence =  {i:(i in word_tokenize(test_sentence.lower())) for i in vocabulary}
-            if classifier.classify(featurized_test_sentence) == 'pos':
+            featurized_test_sentence =  {i:(i in self.analyze_word_th(test_sentence.lower())) for i in A[1]}
+            if A[0].classify(featurized_test_sentence) == 'pos':
                 pos = pos+1
-            elif classifier.classify(featurized_test_sentence) == 'neg':
+            elif A[0].classify(featurized_test_sentence) == 'neg':
                 neg = neg+1
             else:
                 neu = neu+1
@@ -377,7 +400,7 @@ class tweety_search(QWidget):
 
         chart = QChart()
         chart.addSeries(se)
-        chart.setTitle("Programming Pie Chart")
+        chart.setTitle("Sentiment"+str(data))
         chartview = QChartView(chart)
         chartview.setGeometry(0,0,600,500)
         chartview.setRenderHint(QPainter.Antialiasing)
@@ -391,8 +414,9 @@ class tweety_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
+
     def show_sentiment(self,data):
-        df = pd.read_csv(str(data)+'_sentiment.csv')
+        df = pd.read_csv(str(data)+'_api_sentiment.csv')
         pos = 0
         neg = 0
         neu = 0
@@ -418,7 +442,7 @@ class tweety_search(QWidget):
 
         chart = QChart()
         chart.addSeries(se)
-        chart.setTitle("Programming Pie Chart")
+        chart.setTitle("Sentiment"+str(data))
         chartview = QChartView(chart)
         chartview.setGeometry(0,0,600,500)
         chartview.setRenderHint(QPainter.Antialiasing)

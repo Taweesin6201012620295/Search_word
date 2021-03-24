@@ -1,12 +1,12 @@
-# Refference https://www.youtube.com/watch?v=ae62pHnBdAg&ab_channel=BorntoDev
+  # Refference https://www.youtube.com/watch?v=ae62pHnBdAg&ab_channel=BorntoDev
 
 import tweepy
 import csv
 import pandas
-from textblob import TextBlob
+from datetime import *
 
 class Twitter_API:
-    def __init__(self,query,lang):
+    def __init__(self,query,lang,since,until):
 
         consumer_key = 'a9H686ql30kmQTdtk5rlMX9fM'
         consumer_key_secret = 'R4czxY30ilsHjYB4wxTaJidesJKV2oacvFROPUrG8QXDlGjGON'
@@ -16,6 +16,9 @@ class Twitter_API:
         self.query = query
         self.lang = lang
         self.count = 10
+        self.since = datetime.strptime(str(since) + " 00:00:00","%Y-%m-%d %H:%M:%S")
+        until = datetime.strptime(str(until),"%Y-%m-%d") + timedelta(days = 1)
+        self.until = str(until).split(" ")[0]
         self.tweet_mode = "extended"
         self.result_type = "mixed"
         self.auth = tweepy.OAuthHandler(consumer_key,consumer_key_secret)
@@ -29,23 +32,65 @@ class Twitter_API:
         self.writer.writeheader()
 
     def search(self):
-        count = 0
-        maxId = 0
-        while(count < 10):
-            data = self.api.search(q=self.query,lang=self.lang,count=self.count,tweet_mode=self.tweet_mode,result_type=self.result_type,max_id=str(maxId - 1))
-            self.write_csv(data,self.query)
-            if(len(data)==0):
-                continue
-            maxId = data[-1].id
-            count += 1
+        start = 0
+        maxId = -1
+        Inmediat = 0
+        Stop = True
+        while(Stop):
+            try:
+                if (maxId <= 0 and Inmediat<1):
+                    data = self.api.search(q=self.query,
+                                        lang=self.lang,
+                                        count=self.count,
+                                        tweet_mode=self.tweet_mode,
+                                        result_type=self.result_type,
+                                        until = self.until)
+                else:
+                    if Inmediat >= 1:
+                        data = self.api.search(q=self.query,
+                                        lang=self.lang,
+                                        count=self.count,
+                                        tweet_mode=self.tweet_mode,
+                                        result_type=self.result_type,
+                                        max_id = str( maxId - 38555555555555 -555555555 - (100000000*Inmediat)),
+                                        until = self.until)
+                        start += 1
+                        Inmediat +=1
+        
+                    else:
+                        data = self.api.search(q=self.query,
+                                        lang=self.lang,
+                                        count=self.count,
+                                        tweet_mode=self.tweet_mode,
+                                        result_type=self.result_type,
+                                        max_id = str( maxId - 38555555555555),
+                                        until = self.until)
+                self.write_csv(data,self.query)
+
+                if(len(data)==0):
+                    continue
+                maxId = data[-1].id
+                start += 1
+                Stop = self.write_csv(data,self.query)
+
+            except IndexError:
+                Inmediat +=1
+                start += 1
+                if start >=10:
+                    Stop = False
+
         self.csvfile.close()
-        print("Finish all of tweet are ",count)
+        print("Finish all of tweet are ",start)
 
     def write_csv(self, data,query):
         for infor in data:
+            data_created_at = datetime.strptime(str(infor.created_at),"%Y-%m-%d %H:%M:%S")
+            if( data_created_at < self.since):
+                return False
+
             if(  (not infor.retweeted) and ("RT @" not in infor.full_text)  ):
                 self.writer.writerow( {'time': str(infor.created_at), 'places': infor.user.location, 'tweet':infor.full_text} )
-
+        return True
 if __name__ == "__main__":
-    obj = Twitter_API("covid","en")
+    obj = Twitter_API("ร้องข้ามกำแพง","th","2021-03-11","2021-03-18")
     obj.search()
