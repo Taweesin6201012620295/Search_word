@@ -70,12 +70,12 @@ class search_finance(QWidget):
         self.label_3.move(20, 240)
         self.label_3.setFont(QtGui.QFont("Helvetica",16))
         #QLabel4
-        self.label_4 = QLabel('API',self)
+        self.label_4 = QLabel('Twitter',self)
         self.label_4.move(80, 500)
         self.label_4.setFont(QtGui.QFont("Helvetica",16))
         #QLabel5
-        self.label_5 = QLabel('Crawler',self)
-        self.label_5.move(780, 500)
+        self.label_5 = QLabel('Web Crawler',self)
+        self.label_5.move(730, 500)
         self.label_5.setFont(QtGui.QFont("Helvetica",16))
 
         #creating button QPushButton

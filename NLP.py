@@ -20,18 +20,29 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 import shutil
 class NLP:
-    def __init__(self,query):
-        #Build file csv 
-        self.csvfile_input = open(str(query)+'_Data.csv', 'r',newline='', encoding="utf-8")
-        self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
-        
-        fieldnames = ['10 ranking','number']
-        self.csvfile_output = open(str(query)+'_NLP.csv', 'w', newline='', encoding="utf-8")
-        self.writer_output = csv.DictWriter( self.csvfile_output, fieldnames=fieldnames )
-        self.writer_output.writeheader()
+    def __init__(self,query,api):
+        if api == "api":
+            #Build file csv 
+            self.csvfile_input = open(str(query)+'_Data.csv', 'r',newline='', encoding="utf-8")
+            self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
+            
+            fieldnames = ['10 ranking','number']
+            self.csvfile_output = open(str(query)+'_NLP.csv', 'w', newline='', encoding="utf-8")
+            self.writer_output = csv.DictWriter( self.csvfile_output, fieldnames=fieldnames )
+            self.writer_output.writeheader()
+
+        else:
+            #Build file csv 
+            self.csvfile_input = open(str(query)+'_crawler.csv', 'r',newline='', encoding="utf-8")
+            self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
+            
+            fieldnames = ['10 ranking','number']
+            self.csvfile_output = open(str(query)+'_NLP_crawler.csv', 'w', newline='', encoding="utf-8")
+            self.writer_output = csv.DictWriter( self.csvfile_output, fieldnames=fieldnames )
+            self.writer_output.writeheader()
 
     #select th or en word to analysis and count them
-    def save_analysis(self, lang, data):
+    def save_analysis(self, lang, data , api):
         dict_temp = {}
         first = 0
         self.nlp = spacy.load("en_core_web_md")
@@ -56,7 +67,7 @@ class NLP:
             self.writer_output.writerow({'10 ranking':temp, 'number':dict_temp[temp]})
         self.csvfile_output.close()
         self.csvfile_input.close()
-        self.re_search(data)
+        self.re_search(data, api)
 
     #analysis th word
     def analyze_word_th(self, data , search):
@@ -147,11 +158,15 @@ class NLP:
 
         return sort
 
-    def re_search(self,data):
+    def re_search(self,data,api):
         now = datetime.now()
         date_time = now.strftime("%Y-%m-%d %H:%M:%S")
         headers = ["update_time",'file_name']
-        file_name = 'file_list_API.csv'
+        if api == 'api':
+            file_name = 'file_list_API.csv'
+        else:
+            file_name = 'file_list_Crawler.csv'
+
         try:
             csvfile = open(file_name, 'r',encoding='utf-8')
             reader = csv.reader(csvfile, delimiter=',') # Checkink NotFoundError 

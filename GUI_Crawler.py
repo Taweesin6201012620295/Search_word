@@ -15,7 +15,7 @@ import os.path, time
 from datetime import time
 
 from Crawler_file1 import *
-from NLP_crawler import *
+from NLP import *
 from Crawler_file2 import * 
 
 class Crawler_search(QWidget):
@@ -47,8 +47,8 @@ class Crawler_search(QWidget):
                 crawler = Search_thai_Crawler()
                 crawler.get_thai_news(data)
                 print("This one :"+ data)
-                self.obj1 = NLP_crawler(data)
-                self.obj1.save_analysis(slide,data)
+                self.obj1 = NLP(data,'crawler')
+                self.obj1.save_analysis(slide,data,'crawler')
                 self.read_file(data)
                 self.read_file_10rank(data)
                 self.Sentiment(data,slide)
@@ -57,8 +57,8 @@ class Crawler_search(QWidget):
                 crawler2 = Search_Crawler()
                 crawler2.get_eng_news(data)
                 print("This one :"+ data)
-                self.obj1 = NLP_crawler(data)
-                self.obj1.save_analysis(slide,data)
+                self.obj1 = NLP(data,'crawler')
+                self.obj1.save_analysis(slide,data,'crawler')
                 self.read_file(data)
                 self.read_file_10rank(data)
                 self.Sentiment(data,slide)
@@ -451,8 +451,8 @@ class Crawler_search(QWidget):
             crawler = Search_thai_Crawler()
             crawler.get_thai_news(data)
             print("This one :"+ data)
-            self.obj1 = NLP_crawler(data)
-            self.obj1.save_analysis(slide,data)
+            self.obj1 = NLP(data,'crawler')
+            self.obj1.save_analysis(slide,data,'crawler')
             self.read_file(data)
             self.read_file_10rank(data)
             self.Sentiment(data,slide)
@@ -462,8 +462,8 @@ class Crawler_search(QWidget):
             crawler2 = Search_Crawler()
             crawler2.get_eng_news(data)
             print("This one :"+ data)
-            self.obj1 = NLP_crawler(data)
-            self.obj1.save_analysis(slide,data)
+            self.obj1 = NLP(data,'crawler')
+            self.obj1.save_analysis(slide,data,'crawler')
             self.read_file(data)
             self.read_file_10rank(data)
             self.Sentiment(data,slide)
