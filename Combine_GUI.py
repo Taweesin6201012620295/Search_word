@@ -63,6 +63,47 @@ class Login(QWidget):
         self.icon = QtGui.QIcon()
         self.icon.addPixmap(QtGui.QPixmap("../../Downloads/ms-word.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(self.icon)
+    
+    def Sentiment_th(self,data):
+    
+        # pos.txt
+        with codecs.open('pos.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listpos=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        # neu.txt
+        with codecs.open('neu.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listneu=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        # neg.txt
+        with codecs.open('neg.txt', 'r', "utf-8") as f:
+            lines = f.readlines()
+        listneg=[e.strip() for e in lines]
+        f.close() # ปิดไฟล์
+
+        pos1=['pos']*len(listpos)
+        neg1=['neg']*len(listneg)
+        neu1=['neu']*len(listneu)
+
+        training_data = list(zip(listpos,pos1)) + list(zip(listneg,neg1)) + list(zip(listneu,neu1))
+        vocabulary = set(chain(*[word_tokenize(i[0].lower()) for i in training_data]))
+        feature_set = [({i:(i in word_tokenize(sentence.lower())) for i in vocabulary},tag) for sentence, tag in training_data]
+        classifier = nbc.train(feature_set)
+
+        totel = (classifier,vocabulary)
+        return totel
+
+    def storeData(self): 
+        # database 
+        db = self.main_mo()
+        # Its important to use binary mode 
+        dbfile = open('Model', 'wb') 
+        # source, destination
+        pickle.dump(db, dbfile)
+        dbfile.close()
 
     def login(self):
         self.switch_window.emit()

@@ -43,25 +43,14 @@ class Crawler_search(QWidget):
         for i in pan['file_name']:
             store_file.append(i)
         if check not in store_file:
-            if slide == 'th':
-                crawler = Search_thai_Crawler()
-                crawler.get_thai_news(data)
-                print("This one :"+ data)
-                self.obj1 = NLP(data,'crawler')
-                self.obj1.save_analysis(slide,data,'crawler')
-                self.read_file(data)
-                self.read_file_10rank(data)
-                self.Sentiment(data,slide)
-
-            elif slide == 'en':
-                crawler2 = Search_Crawler()
-                crawler2.get_eng_news(data)
-                print("This one :"+ data)
-                self.obj1 = NLP(data,'crawler')
-                self.obj1.save_analysis(slide,data,'crawler')
-                self.read_file(data)
-                self.read_file_10rank(data)
-                self.Sentiment(data,slide)
+            crawler = Search_Crawler()
+            crawler.check_lan(data)
+            print("This one :"+ data)
+            self.obj1 = NLP(data,'crawler')
+            self.obj1.save_analysis(slide,data,'crawler')
+            self.read_file(data)
+            self.read_file_10rank(data)
+            self.Sentiment(data,slide)
 
         else:
             self.read_file(data)
@@ -266,46 +255,6 @@ class Crawler_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
-    def Sentiment_th(self,data):
-
-        # pos.txt
-        with codecs.open('pos.txt', 'r', "utf-8") as f:
-            lines = f.readlines()
-        listpos=[e.strip() for e in lines]
-        f.close() # ปิดไฟล์
-
-        # neu.txt
-        with codecs.open('neu.txt', 'r', "utf-8") as f:
-            lines = f.readlines()
-        listneu=[e.strip() for e in lines]
-        f.close() # ปิดไฟล์
-
-        # neg.txt
-        with codecs.open('neg.txt', 'r', "utf-8") as f:
-            lines = f.readlines()
-        listneg=[e.strip() for e in lines]
-        f.close() # ปิดไฟล์
-
-        pos1=['pos']*len(listpos)
-        neg1=['neg']*len(listneg)
-        neu1=['neu']*len(listneu)
-
-        training_data = list(zip(listpos,pos1)) + list(zip(listneg,neg1)) + list(zip(listneu,neu1))
-        vocabulary = set(chain(*[word_tokenize(i[0].lower()) for i in training_data]))
-        feature_set = [({i:(i in word_tokenize(sentence.lower())) for i in vocabulary},tag) for sentence, tag in training_data]
-        classifier = nbc.train(feature_set)
-        totel = (classifier,vocabulary)
-        return totel
-
-    def storeData(self): 
-        # database 
-        db = self.main_mo()
-        # Its important to use binary mode 
-        dbfile = open('Model', 'wb') 
-        # source, destination
-        pickle.dump(db, dbfile)
-        dbfile.close()
-
     def loadData(self):
         # for reading also binary mode is important
         dbfile = open('Model', 'rb')
@@ -447,27 +396,14 @@ class Crawler_search(QWidget):
     def update_time(self):
         data = self.inputbox.text()
         slide = self.slide.currentText()
-        if slide == 'th':
-            crawler = Search_thai_Crawler()
-            crawler.get_thai_news(data)
-            print("This one :"+ data)
-            self.obj1 = NLP(data,'crawler')
-            self.obj1.save_analysis(slide,data,'crawler')
-            self.read_file(data)
-            self.read_file_10rank(data)
-            self.Sentiment(data,slide)
-            self.get_time(data)
-
-        elif slide == 'en':
-            crawler2 = Search_Crawler()
-            crawler2.get_eng_news(data)
-            print("This one :"+ data)
-            self.obj1 = NLP(data,'crawler')
-            self.obj1.save_analysis(slide,data,'crawler')
-            self.read_file(data)
-            self.read_file_10rank(data)
-            self.Sentiment(data,slide)
-            self.get_time(data)
+        crawler = Search_Crawler()
+        crawler.check_lan(data)
+        print("This one :"+ data)
+        self.obj1 = NLP(data,'crawler')
+        self.obj1.save_analysis(slide,data,'crawler')
+        self.read_file(data)
+        self.read_file_10rank(data)
+        self.Sentiment(data,slide)
 
 
 class pandasModel(QAbstractTableModel):
