@@ -16,7 +16,22 @@ from datetime import time
 
 from Crawler_file1 import *
 from NLP import *
-from Crawler_file2 import * 
+
+class Thread(QThread): # Class progress bar
+
+    _signal = pyqtSignal(int)
+    finised = pyqtSignal()
+    def __init__(self):
+        super(Thread, self).__init__()
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        for i in range(100):
+            time.sleep(0.1)
+            self._signal.emit(i)
+        self.finised.emit()
 
 class Crawler_search(QWidget):
 
@@ -33,16 +48,21 @@ class Crawler_search(QWidget):
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
-        self.check_search(data,slide)
-        self.get_time(data)
+        self.thread = Thread()
+        self.thread._signal.connect(self.signal_accept)
+        self.thread.finised.connect(lambda: self.check_search(data,slide))
+        self.thread._signal.connect(self.thread.quit)
+        self.thread.start()
+        self.button.setEnabled(False)
+        self.button3.setEnabled(False)
     
-    def check_search(self,data,slide):
+    def check_search(self,data,slide): # Fucntion check search word
         pan = pandas.read_csv('file_list_Crawler.csv')
         check = str(data)+'.csv'
         store_file = []
-        for i in pan['file_name']:
+        for i in pan['file_name']: #Check word search in file_list_Crawler
             store_file.append(i)
-        if check not in store_file:
+        if check not in store_file: 
             crawler = Search_Crawler()
             crawler.check_lan(data)
             print("This one :"+ data)
@@ -50,26 +70,34 @@ class Crawler_search(QWidget):
             self.obj1.save_analysis(slide,data,'crawler')
             self.read_file(data)
             self.read_file_10rank(data)
-            self.Sentiment(data,slide)
+            self.get_time(data)
 
         else:
             self.read_file(data)
             self.read_file_10rank(data)
+            self.get_time(data)
             self.show_sentiment(data)
 
-    def Back(self):
+    def Back(self): #Back to Main GUI
         self.switch_window1.emit()
 
     #creating title QMainWindow
     def Creater(self):
         self.setWindowTitle("Web Crawler")
         self.resize(1780,920)
+        self.move(50,50)
 
         #creating box QLineEdit
         self.inputbox = QLineEdit(self)
         self.inputbox.resize(300,30)
         self.inputbox.move(10,100)
         self.inputbox.setFont(QtGui.QFont("Helvetica",16))
+        
+        #creating progress bar
+        self.pbar = QProgressBar(self)
+        self.pbar.setValue(0)
+        self.pbar.resize(300,30)
+        self.pbar.move(10,200)
 
         #creating button QPushButton
         self.button = QPushButton("Enter",self)
@@ -93,7 +121,6 @@ class Crawler_search(QWidget):
         self.button4 = QPushButton("Compare",self)
         self.button4.resize(150,80)
         self.button4.move(1600,100)
-        #self.button4.clicked.connect(self.Back)
         self.button4.setFont(QtGui.QFont("Helvetica",14))
 
         #set icon window
@@ -117,16 +144,16 @@ class Crawler_search(QWidget):
         self.label_4 = QLabel('Link of search word',self)
         self.label_4.move(20,300)
         self.label_4.setFont(QtGui.QFont("Helvetica",16))
-        #QLabel2
+        #QLabel5
         self.label_5 = QLabel('Select your language',self)
         self.label_5.move(20,150)
         self.label_5.setFont(QtGui.QFont("Helvetica",16))
-        #QLabel6
-        self.label_7 = QLabel('First time to search',self)
+        #QLabel7
+        self.label_7 = QLabel('Since',self)
         self.label_7.move(500,10)
         self.label_7.setFont(QtGui.QFont("Helvetica",16))
-        #QLabel6
-        self.label_8 = QLabel('End time to search',self)
+        #QLabel7
+        self.label_8 = QLabel('Until',self)
         self.label_8.move(500,150)
         self.label_8.setFont(QtGui.QFont("Helvetica",16))
         
@@ -165,6 +192,7 @@ class Crawler_search(QWidget):
         self.dateEdit.resize(150,50)
         self.dateEdit.move(500,50)
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
+
         #DateEdit
         self.dateEdit1 = QDateEdit(self)
         self.dateEdit1.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
@@ -179,14 +207,21 @@ class Crawler_search(QWidget):
         self.view.resize(750,500)
         self.view.move(10,350)
 
-    #readfile .csv
+    def signal_accept(self, msg): # Function Progress bar
+        self.pbar.setValue(int(msg))
+        if self.pbar.value() == 99:
+            self.pbar.setValue(0)
+            self.button.setEnabled(True)
+            self.button3.setEnabled(True)
+
+    #Posted Headline and Link of word
     def read_file(self,query):
         pan = pd.read_csv(str(query)+'_crawler.csv',error_bad_lines=False)
         df = pd.DataFrame({'Posted': pan['Posted'],'Headline': pan['Headline'],'Link': pan['Link']})
         model = pandasModel(df)
         self.view.setModel(model)
     
-    #readfile .csv
+    #10 Ranking word
     def read_file_10rank(self,query):
         self.dic10={}
         df = pandas.read_csv(str(query)+'_NLP_crawler.csv')
@@ -199,17 +234,9 @@ class Crawler_search(QWidget):
         for word in self.dic10['10 ranking']:
             self.bro2.append(word)
 
-    #check sentiment language
-    def Sentiment(self,data,slide):
-        if slide == 'th':
-            self.sentiment_pickel(data)
-        elif slide == 'en':
-            self.Sentiment_en(data)
-
-    def Sentiment_en(self,data):
-        
+    #Sentiment English
+    def Sentiment_en(self,data,df):
         #Part-2: Sentiment Analysis Report
-        df = pd.read_csv(str(data)+'_crawler.csv')
         #Finding sentiment analysis (+ve, -ve and neutral)
         pos = 0
         neg = 0
@@ -255,6 +282,7 @@ class Crawler_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
+    #Load Pickle
     def loadData(self):
         # for reading also binary mode is important
         dbfile = open('Model', 'rb')
@@ -262,7 +290,7 @@ class Crawler_search(QWidget):
         dbfile.close()
         return db
     
-    #analysis th word
+    #Analysis thai word
     def analyze_word_th(self, data):
         words = thai_stopwords()
         V = []
@@ -276,8 +304,9 @@ class Crawler_search(QWidget):
                 V.append(i)
         return V
 
-    def sentiment_pickel(self,data):
-        df = pd.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
+
+    #Sentiment Thai
+    def sentiment_pickel(self,data,df):
         A = self.loadData()
         pos = 0
         neg = 0
@@ -326,7 +355,9 @@ class Crawler_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
-    def get_time(self,data):
+
+    def get_time(self,data): # Function Get time from dateEdit
+
         self.date1 = self.dateEdit.date().toPyDate()
         self.date2 = self.dateEdit1.date().toPyDate()
 
@@ -348,11 +379,16 @@ class Crawler_search(QWidget):
         colume1 = pan['Posted'] >= f'{year1}-{month1}-{day_1} 00:00:00'
         colume2 = pan['Posted'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume1 & colume2]
-        print(between)
         df = pd.DataFrame({'Posted': between['Posted'],'Description': between['Description'],'Link': between['Link']})
+        if re.match('[ก-๙]',data) != None:
+            self.sentiment_pickel(data,df)
+        else:
+            self.Sentiment_en(data,df)
+        print(df)
         model = pandasModel(df)
         self.view.setModel(model)
 
+    #Show Sentiment
     def show_sentiment(self,data):
         df = pd.read_csv(str(data)+'_crawler_sentiment.csv')
         pos = 0
@@ -393,7 +429,8 @@ class Crawler_search(QWidget):
     def show_exit(self):
         self.show()
 
-    def update_time(self):
+
+    def update_time(self): # Function Update time
         data = self.inputbox.text()
         slide = self.slide.currentText()
         crawler = Search_Crawler()
@@ -403,10 +440,10 @@ class Crawler_search(QWidget):
         self.obj1.save_analysis(slide,data,'crawler')
         self.read_file(data)
         self.read_file_10rank(data)
-        self.Sentiment(data,slide)
+        self.get_time(data)
 
 
-class pandasModel(QAbstractTableModel):
+class pandasModel(QAbstractTableModel): #Class for creat AbstractTableModel
     
     def __init__(self, data):
         QAbstractTableModel.__init__(self)

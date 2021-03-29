@@ -23,6 +23,22 @@ from API import *
 from NLP import *
 from Combine_GUI import*
 
+class Thread(QThread): # Class progress bar
+    
+    _signal = pyqtSignal(int)
+    finised = pyqtSignal()
+    def __init__(self):
+        super(Thread, self).__init__()
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        for i in range(100):
+            time.sleep(0.1)
+            self._signal.emit(i)
+        self.finised.emit()
+
 class tweety_search(QWidget):
 
     switch_window = QtCore.pyqtSignal()
@@ -38,16 +54,20 @@ class tweety_search(QWidget):
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
-        self.check_search(data,slide,date1,date2)
-        self.create_piechart(data)
-        self.get_time(data)
+        self.thread = Thread()
+        self.thread._signal.connect(self.signal_accept)
+        self.thread.finised.connect(lambda: self.check_search(data,slide,date1,date2))
+        self.thread._signal.connect(self.thread.quit)
+        self.thread.start()
+        self.button.setEnabled(False)
+        self.button1.setEnabled(False)
 
-    #check search word
-    def check_search(self,data,slide,date1,date2):
+
+    def check_search(self,data,slide,date1,date2): # Fucntion check search word
         pan = pandas.read_csv('file_list_API.csv')
         check = str(data)+'.csv'
         store_file = []
-        for i in pan['file_name']:
+        for i in pan['file_name']:  #Check word search in file_list_API
             store_file.append(i)
         if check not in store_file:
             obj = Twitter_API(data,slide,date1,date2)
@@ -58,28 +78,37 @@ class tweety_search(QWidget):
                 self.obj1.save_analysis(slide,data,'api')
                 self.read_file(data)
                 self.read_file_10rank(data)
-                self.Sentiment(data,slide)
+                self.create_piechart(data)
+                self.get_time(data)
             except pandas.errors.EmptyDataError:
                 pass
         else:
             self.read_file(data)
             self.read_file_10rank(data)
+            self.get_time(data)
+            self.create_piechart(data)
             self.show_sentiment(data)
 
 
-    def Back(self):
+    def Back(self): #Back to Main GUI
         self.switch_window.emit()
 
     #creating title QMainWindow
     def Creater(self):
         self.setWindowTitle("Tweet search")
         self.resize(1780,920)
+        self.move(50,50)
 
         #creating box QLineEdit
         self.inputbox = QLineEdit(self)
         self.inputbox.resize(300,30)
         self.inputbox.move(10,100)
         self.inputbox.setFont(QtGui.QFont("Helvetica",16))
+
+        self.pbar = QProgressBar(self)
+        self.pbar.setValue(0)
+        self.pbar.resize(300,30)
+        self.pbar.move(10,200)
 
         #creating button QPushButton
         self.button = QPushButton("Enter",self)
@@ -126,11 +155,11 @@ class tweety_search(QWidget):
         self.label_6.move(800,470)
         self.label_6.setFont(QtGui.QFont("Helvetica",16))
         #QLabel6
-        self.label_7 = QLabel('First time to search',self)
+        self.label_7 = QLabel('Since',self)
         self.label_7.move(500,10)
         self.label_7.setFont(QtGui.QFont("Helvetica",16))
         #QLabel6
-        self.label_8 = QLabel('End time to search',self)
+        self.label_8 = QLabel('Until',self)
         self.label_8.move(500,150)
         self.label_8.setFont(QtGui.QFont("Helvetica",16))
 
@@ -193,7 +222,14 @@ class tweety_search(QWidget):
         self.view.resize(750,500)
         self.view.move(10,350)
 
-    #readfile .csv
+    def signal_accept(self, msg): # Function Progress bar
+        self.pbar.setValue(int(msg))
+        if self.pbar.value() == 99:
+            self.pbar.setValue(0)
+            self.button.setEnabled(True)
+            self.button1.setEnabled(True)
+
+    #time tweet of word
     def read_file(self,query):
         pan = pd.read_csv(str(query)+'_Data.csv')
         df = pd.DataFrame({'time': pan['time'],'tweet': pan['tweet']})
@@ -201,7 +237,7 @@ class tweety_search(QWidget):
         self.view.setModel(model)
 
 
-    #readfile .csv
+    #10 Ranking word
     def read_file_10rank(self,query):
         self.dic10={}
         df = pandas.read_csv(str(query)+'_NLP.csv')
@@ -246,19 +282,11 @@ class tweety_search(QWidget):
         self.read_file(data)
         self.read_file_10rank(data)
         self.create_piechart(data)
-        self.Sentiment(data,slide)
         self.get_time(data)
     
-    #check sentiment language
-    def Sentiment(self,data,slide):
-        if slide == 'th':
-            self.sentiment_pickel(data)
-        elif slide == 'en':
-            self.Sentiment_en(data)
-    
-    def Sentiment_en(self,data):
+    #Sentiment English
+    def Sentiment_en(self,data,df):
         #Part-2: Sentiment Analysis Report
-        df = pd.read_csv(str(data)+'_Data.csv')
         #Finding sentiment analysis (+ve, -ve and neutral)
         pos = 0
         neg = 0
@@ -303,6 +331,7 @@ class tweety_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
+    #Load Pickel
     def loadData(self):
         # for reading also binary mode is important
         dbfile = open('Model', 'rb')
@@ -324,8 +353,8 @@ class tweety_search(QWidget):
                 V.append(i)
         return V
 
-    def sentiment_pickel(self,data):
-        df = pd.read_csv(str(data)+'_Data.csv')
+    #Sentiment Thai
+    def Sentiment_pickel(self,data,df):
         A = self.loadData()
         pos = 0
         neg = 0
@@ -373,7 +402,7 @@ class tweety_search(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
-
+    #Show Sentiment
     def show_sentiment(self,data):
         df = pd.read_csv(str(data)+'_api_sentiment.csv')
         pos = 0
@@ -410,7 +439,8 @@ class tweety_search(QWidget):
         self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png", "PNG")
         self.bro5.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png);')
 
-    def get_time(self,data):
+
+    def get_time(self,data): # Function Get time from dateEdit
         self.date1 = self.dateEdit.date().toPyDate()
         self.date2 = self.dateEdit1.date().toPyDate()
 
@@ -428,15 +458,17 @@ class tweety_search(QWidget):
             month1 = '0' + month1
         if len(month2) == 1:
             month2 = '0' + month2
-        
-        since = f'{year1}-{month1}-{day_1}'
-        until = f'{year2}-{month2}-{day_2}'
 
         colume1 = pan['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
         colume2 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume1 & colume2]
-        print(between)
         df = pd.DataFrame({'time': between['time'],'tweet': between['tweet']})
+        print(df)
+        if re.match('[ก-๙]',data) != None:
+            self.Sentiment_pickel(data,df)
+        else:
+            self.Sentiment_en(data,df)
+
         model = pandasModel(df)
         self.view.setModel(model)
 
@@ -444,7 +476,7 @@ class tweety_search(QWidget):
     def show_exit(self):
         self.show()
 
-class pandasModel(QAbstractTableModel):
+class pandasModel(QAbstractTableModel): #Class for creat AbstractTableModel
     
     def __init__(self, data):
         QAbstractTableModel.__init__(self)
@@ -465,7 +497,7 @@ class pandasModel(QAbstractTableModel):
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self._data.columns[col]
-        return None
+        return None 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -10,7 +10,7 @@ class Search_Crawler():
     def __init__(self):
         pass
 
-    def check_lan(self,lang):
+    def check_lan(self,lang): #Check Language
         if re.match('[ก-๙]',lang) != None:
             thai = Search_thai_Crawler()
             thai.get_thai_news(lang)
@@ -18,7 +18,7 @@ class Search_Crawler():
             en = Search_en_Crawler()
             en.get_eng_news(lang)
 
-class Search_en_Crawler():
+class Search_en_Crawler(): #Search English word
     def __init__(self):
         pass
         
@@ -80,7 +80,7 @@ class Search_en_Crawler():
                 writer.writerow( {'Headline':article[0], 'Posted':article[1], 'Description':article[2], 'Link':article[3]} )
             csvfile.close()
 
-class Search_thai_Crawler:
+class Search_thai_Crawler: #Search thai Wrod
     def __init__(self):
         pass
 

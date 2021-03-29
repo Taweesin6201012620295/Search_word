@@ -15,7 +15,7 @@ class Twitter_API:
 
         self.query = query
         self.lang = lang
-        self.count = 10
+        self.count = 100
         self.since = datetime.strptime(str(since) + " 00:00:00","%Y-%m-%d %H:%M:%S")
         until = datetime.strptime(str(until),"%Y-%m-%d") + timedelta(days = 1)
         self.until = str(until).split(" ")[0]
@@ -31,7 +31,7 @@ class Twitter_API:
         self.writer = csv.DictWriter( self.csvfile, fieldnames=fieldnames )
         self.writer.writeheader()
 
-    def search(self):
+    def search(self): #Function search word
         start = 0
         maxId = -1
         Inmediat = 0
@@ -82,6 +82,7 @@ class Twitter_API:
         self.csvfile.close()
         print("Finish all of tweet are ",start)
 
+    #Write file csv
     def write_csv(self, data,query):
         for infor in data:
             data_created_at = datetime.strptime(str(infor.created_at),"%Y-%m-%d %H:%M:%S")
@@ -91,6 +92,7 @@ class Twitter_API:
             if(  (not infor.retweeted) and ("RT @" not in infor.full_text)  ):
                 self.writer.writerow( {'time': str(infor.created_at), 'places': infor.user.location, 'tweet':infor.full_text} )
         return True
+
 if __name__ == "__main__":
-    obj = Twitter_API("ร้องข้ามกำแพง","th","2021-03-11","2021-03-18")
+    obj = Twitter_API("โควิด","th","2021-03-26","2021-03-29")
     obj.search()

@@ -22,6 +22,22 @@ from Crawler_file1 import *
 
 from Combine_GUI import*
 
+class Thread(QThread): # Class progress bar
+
+    finised = pyqtSignal()
+    _signal = pyqtSignal(int)
+    def __init__(self):
+        super(Thread, self).__init__()
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        for i in range(100):
+            time.sleep(0.1)
+            self._signal.emit(i)
+        self.finised.emit()
+
 class search_finance(QWidget):
 
     switch_window2 = QtCore.pyqtSignal()
@@ -32,23 +48,34 @@ class search_finance(QWidget):
         self.Creater()
 
     def getTextValue(self):
+        self.thread = Thread()
+        self.thread._signal.connect(self.signal_accept)
         data = self.inputbox.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
-        self.stock(data,date1,date2)
+        self.thread.finised.connect(lambda: self.stock(data,date1,date2))
+        self.thread.start()
+        self.button.setEnabled(False)
 
-    def Back(self):
+    def Back(self): #Back to Main GUI
         self.switch_window2.emit()
 
     def Creater(self):
         self.setWindowTitle("Finance")
         self.resize(1400,1000)
+        self.move(50,50)
 
         #creating box QLineEdit
         self.inputbox = QLineEdit(self)
         self.inputbox.resize(300,30)
         self.inputbox.move(10,100)
         self.inputbox.setFont(QtGui.QFont("Helvetica",16))
+
+        #creating progress bar
+        self.pbar = QProgressBar(self)
+        self.pbar.setValue(0)
+        self.pbar.resize(300,30)
+        self.pbar.move(10,300)
 
         #set icon window
         self.icon = QtGui.QIcon()
@@ -126,7 +153,6 @@ class search_finance(QWidget):
         self.Year = int(datetime.now().strftime('%Y'))
         self.Month = int(datetime.now().strftime('%m'))
         self.Day = int(datetime.now().strftime('%d'))
-
         self.dateEdit = QDateEdit(self)
         self.dateEdit.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
         self.dateEdit.setMaximumTime(QtCore.QTime(23, 59, 59))
@@ -135,6 +161,7 @@ class search_finance(QWidget):
         self.dateEdit.resize(150,50)
         self.dateEdit.move(100,150)
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
+
         #DateEdit
         self.dateEdit1 = QDateEdit(self)
         self.dateEdit1.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
@@ -146,7 +173,14 @@ class search_finance(QWidget):
         self.dateEdit1.setFont(QtGui.QFont("Helvetica",12))
 
 
-    def stock(self,data,date1,date2):
+    def signal_accept(self, msg): # Function Progress bar
+        self.pbar.setValue(int(msg))
+        if self.pbar.value() == 99:
+            self.pbar.setValue(0)
+            self.button.setEnabled(True)
+
+
+    def stock(self,data,date1,date2): #Function search stock
         stock = str(data)
         start = date1
         end = date2
@@ -163,7 +197,7 @@ class search_finance(QWidget):
         self.plot_stock()
         plt.close('all')
 
-    def plot_stock(self):
+    def plot_stock(self): #Function plot grahp stock
         plt.style.use('ggplot')
 
         # Extracting Data for plotting
@@ -203,40 +237,54 @@ class search_finance(QWidget):
         self.bro1.clear()
         self.bro1.setStyleSheet('border-image: url(C:/Users/Lenovo/Desktop/New folder/stock.png);')
     
-    def compare(self):
+
+    def compare(self): # Send word to API and Crawler
         data = self.inputbox.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
-        if re.match('[ก-๙]',data) != None:
-            data = self.inputbox.text()
+        if re.match('[ก-๙]',data) != None: # If word is Thai word 
+            
             api = Twitter_API(data,'th',date1,date2)
             api.search()
             crawler = Search_Crawler()
             crawler.check_lan(data)
-            self.Sentiment(data,'th')
+            self.get_time(data)
 
-        else:
-            data = self.inputbox.text()
+        else: # If word is English word
+            
             api = Twitter_API(data,'en',date1,date2)
             api.search()
             crawler = Search_Crawler()
             crawler.check_lan(data)
-            self.Sentiment(data,'en')
+            self.get_time(data)
 
-    #check sentiment language
-    def Sentiment(self,data,lan):
-        if lan == 'th':
-            self.Sentiment_api_pickle(data)
-            self.Sentiment_crawler_pickle(data)
-        elif lan == 'en':
-            self.Sentiment_crawler_en(data)
-            self.Sentiment_api_en(data)
+    #analysis th word
+    def analyze_word_th(self, data):
+        words = thai_stopwords()
+        V = []
+        data = re.sub("[0-9]",'',data)
+        data = re.sub("[a-z A-Z]",'',data)
+        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
+        nlp1 = [data for data in nlp if data not in words]
+        for i in nlp1:
+            r = re.sub('\w','',i)
+            if i not in r and data:
+                V.append(i)
+        return V
+    
+    #Load Pickal
+    def loadData(self):
+        # for reading also binary mode is important
+        dbfile = open('Model', 'rb')
+        db = pickle.load(dbfile)
+        dbfile.close()
+        return db
 
 ############################ API ############################################
-    def Sentiment_api_en(self,data):
-
+    
+    #Sentiment English
+    def Sentiment_api_en(self,data,df):
         #Part-2: Sentiment Analysis Report
-        df = pd.read_csv(str(data)+'_Data.csv',error_bad_lines=False)
         #Finding sentiment analysis (+ve, -ve and neutral)
         pos = 0
         neg = 0
@@ -283,29 +331,9 @@ class search_finance(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
-    def loadData(self):
-        # for reading also binary mode is important
-        dbfile = open('Model', 'rb')
-        db = pickle.load(dbfile)
-        dbfile.close()
-        return db
+    #Sentiment Thai
+    def Sentiment_api_pickle(self,data,df):
 
-    #analysis th word
-    def analyze_word_th(self, data):
-        words = thai_stopwords()
-        V = []
-        data = re.sub("[0-9]",'',data)
-        data = re.sub("[a-z A-Z]",'',data)
-        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
-        nlp1 = [data for data in nlp if data not in words]
-        for i in nlp1:
-            r = re.sub('\w','',i)
-            if i not in r and data:
-                V.append(i)
-        return V
-
-    def Sentiment_api_pickle(self,data):
-        df = pd.read_csv(str(data)+'_Data.csv',error_bad_lines=False)
         A = self.loadData()
         pos = 0
         neg = 0
@@ -355,16 +383,15 @@ class search_finance(QWidget):
             writer.writerow([pos,neg,neu])
 
 ############################ Crawler ############################################
-    
-    def Sentiment_crawler_en(self,data):
+    #Sentiment English
+    def Sentiment_crawler_en(self,data,df):
         
         #Part-2: Sentiment Analysis Report
-        df = pd.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
         #Finding sentiment analysis (+ve, -ve and neutral)
         pos = 0
         neg = 0
         neu = 0
-        for tweet in df['Description']:
+        for tweet in df['tweet']:
             analysis = TextBlob(tweet)
             if analysis.sentiment[0]>0:
                 pos = pos +1
@@ -406,35 +433,15 @@ class search_finance(QWidget):
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
 
-    def loadData(self):
-        # for reading also binary mode is important
-        dbfile = open('Model', 'rb')
-        db = pickle.load(dbfile)
-        dbfile.close()
-        return db
-    
-    #analysis th word
-    def analyze_word_th(self, data):
-        words = thai_stopwords()
-        V = []
-        data = re.sub("[0-9]",'',data)
-        data = re.sub("[a-z A-Z]",'',data)
-        nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
-        nlp1 = [data for data in nlp if data not in words]
-        for i in nlp1:
-            r = re.sub('\w','',i)
-            if i not in r and data:
-                V.append(i)
-        return V
+    #Sentiment Thai
+    def Sentiment_crawler_pickle(self,data,df):
 
-    def Sentiment_crawler_pickle(self,data):
-        df = pd.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
         A = self.loadData()
         pos = 0
         neg = 0
         neu = 0
 
-        for tweet in df['Description']:
+        for tweet in df['tweet']:
             test_sentence = tweet
             featurized_test_sentence =  {i:(i in self.analyze_word_th(test_sentence.lower())) for i in A[1]}
             if A[0].classify(featurized_test_sentence) == 'pos':
@@ -476,6 +483,49 @@ class search_finance(QWidget):
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
+
+
+    def get_time(self,data): # Function Get time from dateEdit
+        self.date1 = self.dateEdit.date().toPyDate()
+        self.date2 = self.dateEdit1.date().toPyDate()
+
+        day_1,day_2 = str(self.date1.day), str(self.date2.day)
+        month1,month2 = str(self.date1.month), str(self.date2.month)
+        year1, year2 = str(self.date1.year), str(self.date2.year)
+        #print(day_1,month1,year1)
+    
+        pan = pandas.read_csv(str(data)+'_Data.csv')
+        pan1 = pandas.read_csv(str(data)+'_crawler.csv',error_bad_lines=False)
+        if len(day_1) == 1:
+            day_1 = '0' + day_1
+        if len(day_2) == 1:
+            day_2 = '0' + day_2
+        if len(month1) == 1: 
+            month1 = '0' + month1
+        if len(month2) == 1:
+            month2 = '0' + month2
+
+        colume = pan['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
+        colume1 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
+        between = pan[colume & colume1]
+        
+        colume2 = pan1['Posted'] >= f'{year1}-{month1}-{day_1} 00:00:00'
+        colume3 = pan1['Posted'] <= f'{year2}-{month2}-{day_2} 23:59:59'
+        between1 = pan1[colume2 & colume3]
+
+        df = pd.DataFrame({'time': between['time'],'tweet': between['tweet']})
+        df1 = pd.DataFrame({'time': between1['Posted'],'tweet': between1['Description']})
+
+        print(df)
+        print(df1)
+
+        if re.match('[ก-๙]',data) != None:
+            self.Sentiment_api_pickle(data,df)
+            self.Sentiment_crawler_pickle(data,df1)
+        else:
+            self.Sentiment_api_en(data,df)
+            self.Sentiment_crawler_en(data,df1)
+
 
 
     def show_exit(self):

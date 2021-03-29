@@ -79,8 +79,9 @@ class NLP:
         nlp1 = [data for data in nlp if data not in words]
         for i in nlp1:
             r = re.sub('\w','',i)
-            if i not in r and data and i != search:
-                V.append(i)
+            if i != search:
+                if i not in r and data:
+                    V.append(i)
         return V
 
     #analysis en word
@@ -95,17 +96,19 @@ class NLP:
         self.add_filter()
         for word in self.docs:
             self.twitter_check =( word.text[0]!="#"
-                                and word.text[0]!="@"
-                                and "#"+word.text not in self.check
-                                and "@"+word.text not in self.check
-                                and word.text not in self.nlp.Defaults.stop_words 
-                                and word.text not in stopwords.words('english')
-                                and not word.is_punct 
-                                and "https:" not in word.text 
-                                and self.filter_type(word)
-                                and word.text != search)
+                                    and word.text[0]!="@"
+                                    and "#"+word.text not in self.check
+                                    and "@"+word.text not in self.check
+                                    and word.text not in self.nlp.Defaults.stop_words 
+                                    and word.text not in stopwords.words('english')
+                                    and not word.is_punct 
+                                    and "https:" not in word.text 
+                                    and self.filter_type(word)
+                                    and word.text.lower() != search.lower())
             if( self.twitter_check ):
                 self.output.append(word.text)
+            print(word.text)
+            print(search)
         return self.output
 
     #combine # and word

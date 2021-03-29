@@ -4,14 +4,19 @@ from PyQt5.QtChart import*
 from PyQt5.QtGui import*
 from PyQt5.QtCore import*
 from PyQt5 import *
-
+import unittest
 from datetime import datetime, date
 
 from Gui_API import *
 from GUI_Crawler import *
 from GUI_Finance import *
 
-class Login(QWidget):
+class TestNumber(unittest.TestCase): # Test Unit test
+    def main(self):
+        controller = Controller()
+        controller.show_window_one()
+
+class Login(QWidget): # Main GUI
 
     switch_window = QtCore.pyqtSignal()
     switch_window1 = QtCore.pyqtSignal()
@@ -106,15 +111,15 @@ class Login(QWidget):
         dbfile.close()
 
     def login(self):
-        self.switch_window.emit()
+        self.switch_window.emit() # Link GUI API
 
     def login1(self):
-        self.switch_window1.emit()
+        self.switch_window1.emit() # Link GUI Crawler
 
     def login2(self):
-        self.switch_window2.emit()
+        self.switch_window2.emit() # Link GUI Finance
 
-    def Clear(self):
+    def Clear(self): # Clear Search History
         file_API = 'file_list_API.csv'
         headers = ["update_time",'file_name']
         csvfile = open(file_API, 'w', newline='')
@@ -128,17 +133,17 @@ class Login(QWidget):
         writer.writeheader()
 
 
-class Controller:
+class Controller: #Class switch window
 
     def __init__(self):
         pass
 
     def show_window_one(self):
         self.one = Login()
-        self.one.switch_window.connect(self.show_main)
-        self.one.switch_window1.connect(self.show_window_two)
-        self.one.switch_window2.connect(self.show_window_three)
-        self.one.show()
+        self.one.switch_window.connect(self.show_main) # Switch API
+        self.one.switch_window1.connect(self.show_window_two) # Switch Crawler
+        self.one.switch_window2.connect(self.show_window_three)  # Switch Finance
+        self.one.show() 
 
     def show_main(self):
         self.window = tweety_search()
