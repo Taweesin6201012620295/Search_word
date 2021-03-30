@@ -1,6 +1,7 @@
   # Refference https://www.youtube.com/watch?v=ae62pHnBdAg&ab_channel=BorntoDev
 
 import tweepy
+import unittest
 import csv
 import pandas
 from datetime import *
@@ -81,6 +82,7 @@ class Twitter_API:
 
         self.csvfile.close()
         print("Finish all of tweet are ",start)
+        return data
 
     #Write file csv
     def write_csv(self, data,query):
@@ -94,5 +96,10 @@ class Twitter_API:
         return True
 
 if __name__ == "__main__":
-    obj = Twitter_API("โควิด","th","2021-03-26","2021-03-29")
-    obj.search()
+
+    class Unit_test(unittest.TestCase):
+        def test(self):
+            obj = Twitter_API("covid","en","2021-03-26","2021-03-29");
+            self.assertIsNotNone(obj.search())
+
+    unittest.main()

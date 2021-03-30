@@ -1,22 +1,25 @@
 import re
 import csv
+import unittest
 import feedparser
 import requests
 from pprint import pprint
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
 class Search_Crawler():
-    def __init__(self):
-        pass
 
     def check_lan(self,lang): #Check Language
         if re.match('[ก-๙]',lang) != None:
-            thai = Search_thai_Crawler()
-            thai.get_thai_news(lang)
+            th = Search_thai_Crawler()
+            th.get_thai_news(lang)
+            en = " "
         else:
             en = Search_en_Crawler()
             en.get_eng_news(lang)
+            th = " "
+        return th,en
 
 class Search_en_Crawler(): #Search English word
     def __init__(self):
@@ -123,6 +126,12 @@ class Search_thai_Crawler: #Search thai Wrod
             writer.writerow(['Headline','Posted','Description','Link'])
             writer.writerows(articles)
 
-if __name__ == "__main__":  
-    test = Search_Crawler()
-    test.check_lan(str(input()))
+if __name__ == "__main__": 
+
+    class Unit_test(unittest.TestCase):
+        def test_main(self):
+            test = Search_Crawler()
+            test.check_lan(str(input()))
+            self.assertIsNotNone(test)
+ 
+    unittest.main()

@@ -10,6 +10,7 @@ from PyQt5 import *
 import pandas as pd
 import os
 import os.path, time
+import unittest
 from datetime import time
 from textblob import TextBlob
 import matplotlib.pyplot as plt
@@ -22,6 +23,11 @@ from nltk import NaiveBayesClassifier as nbc
 from API import *
 from NLP import *
 from Combine_GUI import*
+
+class TestNumber(unittest.TestCase): # Test Unit test
+    def test_main(self):
+        controller = Controller()
+        self.assertIsNotNone(controller)
 
 class Thread(QThread): # Class progress bar
     
@@ -54,6 +60,7 @@ class tweety_search(QWidget):
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
+
         self.thread = Thread()
         self.thread._signal.connect(self.signal_accept)
         self.thread.finised.connect(lambda: self.check_search(data,slide,date1,date2))
@@ -201,7 +208,9 @@ class tweety_search(QWidget):
         self.Month = int(datetime.now().strftime('%m'))
         self.Day = int(datetime.now().strftime('%d'))
         self.dateEdit = QDateEdit(self)
+
         self.dateEdit.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
+
         self.dateEdit.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit.setDate(QtCore.QDate(self.Year,self.Month,self.Day-1))
         self.dateEdit.setCalendarPopup(True)
@@ -210,7 +219,9 @@ class tweety_search(QWidget):
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
         #DateEdit
         self.dateEdit1 = QDateEdit(self)
+
         self.dateEdit1.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
+
         self.dateEdit1.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit1.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit1.setCalendarPopup(True)

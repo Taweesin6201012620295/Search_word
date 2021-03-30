@@ -1,4 +1,5 @@
 import sys
+import unittest
 from PyQt5.QtWidgets import *
 from PyQt5.QtChart import*
 from PyQt5.QtGui import*
@@ -16,6 +17,11 @@ from datetime import time
 
 from Crawler_file1 import *
 from NLP import *
+
+class TestNumber(unittest.TestCase): # Test Unit test
+    def test_main(self):
+        controller = Controller()
+        self.assertIsNotNone(controller)
 
 class Thread(QThread): # Class progress bar
 
@@ -48,6 +54,7 @@ class Crawler_search(QWidget):
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
+
         self.thread = Thread()
         self.thread._signal.connect(self.signal_accept)
         self.thread.finised.connect(lambda: self.check_search(data,slide))

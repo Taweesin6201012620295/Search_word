@@ -1,3 +1,4 @@
+# refference https://stackoverflow.com/questions/15044447/how-do-i-unit-testing-my-gui-program-with-python-and-pyqt
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtChart import*
@@ -12,9 +13,9 @@ from GUI_Crawler import *
 from GUI_Finance import *
 
 class TestNumber(unittest.TestCase): # Test Unit test
-    def main(self):
+    def test_main(self):
         controller = Controller()
-        controller.show_window_one()
+        self.assertIsNotNone(controller)
 
 class Login(QWidget): # Main GUI
 

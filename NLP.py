@@ -16,9 +16,11 @@ from pythainlp.corpus import*
 import pandas
 import re
 import time
+import unittest
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 import shutil
+
 class NLP:
     def __init__(self,query,api):
         if api == "api":
@@ -88,6 +90,8 @@ class NLP:
     def analyze_word_en(self, data , search):
         data = re.sub("[0-9]",'',data)
         data = re.sub("#",'',data)
+        data = re.sub("|",'',data)
+        data = re.sub("-",'',data)
         self.output = []
         self.check = {}
         self.data = data
@@ -107,8 +111,6 @@ class NLP:
                                     and word.text.lower() != search.lower())
             if( self.twitter_check ):
                 self.output.append(word.text)
-            print(word.text)
-            print(search)
         return self.output
 
     #combine # and word
@@ -208,7 +210,13 @@ class NLP:
             csvfile.close()
 
 if __name__ == "__main__":
-        start = time.time()
-        obj = NLP()
-        obj.save_analysis(str(input()),'covid')
-        print( int(time.time() - start) )
+
+    class Unit_test(unittest.TestCase):
+        def test_main(self):
+            obj = NLP('God','crawler')
+            obj.save_analysis('en','God','crawler')
+            self.assertIsNotNone(obj)
+
+    #start = time.time()
+    unittest.main()
+    #print( int(time.time() - start) )
