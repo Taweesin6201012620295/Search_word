@@ -210,9 +210,9 @@ class NLP:
             csvfile.close()
 
 if __name__ == "__main__":
-
+    
     class Unit_test(unittest.TestCase):
-        def test_main(self):
+        def test_NLP(self):
             obj = NLP('God','crawler')
             obj.save_analysis('en','God','crawler')
             self.assertIsNotNone(obj)

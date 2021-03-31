@@ -129,9 +129,9 @@ class Search_thai_Crawler: #Search thai Wrod
 if __name__ == "__main__": 
 
     class Unit_test(unittest.TestCase):
-        def test_main(self):
+        def test_crawler(self):
             test = Search_Crawler()
-            test.check_lan(str(input()))
+            test.check_lan("God")
             self.assertIsNotNone(test)
  
     unittest.main()

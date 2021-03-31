@@ -29,12 +29,12 @@ class TestNumber(unittest.TestCase): # Test Unit test
         controller = Controller()
         self.assertIsNotNone(controller)
 
-class Thread(QThread): # Class progress bar
+class Progress(QThread): # Class progress bar
     
     _signal = pyqtSignal(int)
-    finised = pyqtSignal()
+
     def __init__(self):
-        super(Thread, self).__init__()
+        super(Progress, self).__init__()
 
     def __del__(self):
         self.wait()
@@ -43,7 +43,39 @@ class Thread(QThread): # Class progress bar
         for i in range(100):
             time.sleep(0.1)
             self._signal.emit(i)
-        self.finised.emit()
+
+
+class API_thread(QObject): # Class progress bar
+    
+    signal = pyqtSignal(str)
+    finished = pyqtSignal()
+    
+    def __init__(self,data,slide,date1,date2):
+        super().__init__()
+        self.data = data
+        self.slide = slide
+        self.date1 = date1
+        self.date2 = date2
+    
+    def check_search(self): # Fucntion check search word
+        pan = pandas.read_csv('file_list_API.csv')
+        check = str(self.data)+'.csv'
+        store_file = []
+        for i in pan['file_name']:  #Check word search in file_list_API
+            store_file.append(i)
+        if check not in store_file:
+            obj = Twitter_API(self.data,self.slide,self.date1,self.date2)
+            obj.search()
+            print("This one :"+self.data)
+
+            self.obj1 = NLP(self.data,'api')
+            self.obj1.save_analysis(self.slide,self.data,'api')
+            self.signal.emit(self.data)
+
+        else:
+            self.signal.emit(self.data)
+
+        self.finished.emit()
 
 class tweety_search(QWidget):
 
@@ -61,16 +93,31 @@ class tweety_search(QWidget):
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
 
-        self.thread = Thread()
-        self.thread._signal.connect(self.signal_accept)
-        self.thread.finised.connect(lambda: self.check_search(data,slide,date1,date2))
-        self.thread._signal.connect(self.thread.quit)
+        self.thread = QThread()
+        self.worker = API_thread(data,slide,date1,date2)
+        self.progress = Progress()
+    
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.check_search)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.signal.connect(self.Link)
+        self.button.setEnabled(False)
+        self.button1.setEnabled(False)
+
         self.thread.start()
+        self.button.setEnabled(True)
+        self.button1.setEnabled(True)
+        self.progress._signal.connect(self.signal_accept)
+        self.progress._signal.connect(self.progress.quit)
+
+        self.progress.start()
         self.button.setEnabled(False)
         self.button1.setEnabled(False)
 
 
-    def check_search(self,data,slide,date1,date2): # Fucntion check search word
+    '''def check_search(self,data,slide,date1,date2): # Fucntion check search word
         pan = pandas.read_csv('file_list_API.csv')
         check = str(data)+'.csv'
         store_file = []
@@ -80,21 +127,19 @@ class tweety_search(QWidget):
             obj = Twitter_API(data,slide,date1,date2)
             obj.search()
             print("This one :"+data)
-            try:
-                self.obj1 = NLP(data,'api')
-                self.obj1.save_analysis(slide,data,'api')
-                self.read_file(data)
-                self.read_file_10rank(data)
-                self.create_piechart(data)
-                self.get_time(data)
-            except pandas.errors.EmptyDataError:
-                pass
+            self.obj1 = NLP(data,'api')
+            self.obj1.save_analysis(slide,data,'api')
+            self.read_file(data)
+            self.read_file_10rank(data)
+            self.create_piechart(data)
+            self.get_time(data)
+
         else:
             self.read_file(data)
             self.read_file_10rank(data)
             self.get_time(data)
             self.create_piechart(data)
-            self.show_sentiment(data)
+            self.show_sentiment(data)'''
 
 
     def Back(self): #Back to Main GUI
@@ -208,20 +253,17 @@ class tweety_search(QWidget):
         self.Month = int(datetime.now().strftime('%m'))
         self.Day = int(datetime.now().strftime('%d'))
         self.dateEdit = QDateEdit(self)
-
         self.dateEdit.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
-
         self.dateEdit.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit.setDate(QtCore.QDate(self.Year,self.Month,self.Day-1))
+        self.dateEdit.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.resize(150,50)
         self.dateEdit.move(500,50)
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
         #DateEdit
         self.dateEdit1 = QDateEdit(self)
-
         self.dateEdit1.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
-
         self.dateEdit1.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit1.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit1.setCalendarPopup(True)
@@ -239,6 +281,12 @@ class tweety_search(QWidget):
             self.pbar.setValue(0)
             self.button.setEnabled(True)
             self.button1.setEnabled(True)
+    
+    def Link(self,data):
+        self.read_file(data)
+        self.read_file_10rank(data)
+        self.create_piechart(data)
+        self.get_time(data)
 
     #time tweet of word
     def read_file(self,query):

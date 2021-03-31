@@ -157,7 +157,7 @@ class Controller: #Class switch window
         self.window_two.switch_window1.connect(self.close1)
         self.one.close()
         self.window_two.show()
-    
+
     def show_window_three(self):
         self.window_three = search_finance()
         self.window_three.switch_window2.connect(self.close2)
@@ -171,7 +171,7 @@ class Controller: #Class switch window
     def close1(self):
         self.window_two.close()
         self.show_window_one()
-    
+
     def close2(self):
         self.window_three.close()
         self.show_window_one()

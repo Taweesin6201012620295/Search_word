@@ -29,12 +29,12 @@ class TestNumber(unittest.TestCase): # Test Unit test
         controller = Controller()
         self.assertIsNotNone(controller)
 
-class Thread(QThread): # Class progress bar
+class Progress(QThread): # Class progress bar
 
     finised = pyqtSignal()
     _signal = pyqtSignal(int)
     def __init__(self):
-        super(Thread, self).__init__()
+        super(Progress, self).__init__()
 
     def __del__(self):
         self.wait()
@@ -59,10 +59,10 @@ class search_finance(QWidget):
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
 
-        self.thread = Thread()
-        self.thread._signal.connect(self.signal_accept)
-        self.thread.finised.connect(lambda: self.stock(data,date1,date2))
-        self.thread.start()
+        self.progress = Progress()
+        self.progress._signal.connect(self.signal_accept)
+        self.progress.finised.connect(lambda: self.stock(data,date1,date2))
+        self.progress.start()
         self.button.setEnabled(False)
 
     def Back(self): #Back to Main GUI
@@ -71,19 +71,24 @@ class search_finance(QWidget):
     def Creater(self):
         self.setWindowTitle("Finance")
         self.resize(1400,1000)
-        self.move(50,50)
+        self.move(50,30)
 
         #creating box QLineEdit
         self.inputbox = QLineEdit(self)
-        self.inputbox.resize(300,30)
-        self.inputbox.move(10,100)
+        self.inputbox.resize(200,30)
+        self.inputbox.move(180,100)
         self.inputbox.setFont(QtGui.QFont("Helvetica",16))
+        #creating box QLineEdit
+        self.inputbox1 = QLineEdit(self)
+        self.inputbox1.resize(200,30)
+        self.inputbox1.move(180,150)
+        self.inputbox1.setFont(QtGui.QFont("Helvetica",16))
 
         #creating progress bar
         self.pbar = QProgressBar(self)
         self.pbar.setValue(0)
         self.pbar.resize(300,30)
-        self.pbar.move(10,300)
+        self.pbar.move(10,350)
 
         #set icon window
         self.icon = QtGui.QIcon()
@@ -91,16 +96,20 @@ class search_finance(QWidget):
         self.setWindowIcon(self.icon)
 
         #QLabel1
-        self.label_1 = QLabel('Enter your Stock',self)
-        self.label_1.move(20, 50)
-        self.label_1.setFont(QtGui.QFont("Helvetica",18))
+        self.label_0 = QLabel('Keyword Stock',self)
+        self.label_0.move(10, 100)
+        self.label_0.setFont(QtGui.QFont("Helvetica",14))
+        #QLabel1
+        self.label_1 = QLabel('Keyword Search',self)
+        self.label_1.move(10, 150)
+        self.label_1.setFont(QtGui.QFont("Helvetica",14))
         #QLabel2
         self.label_2 = QLabel('Since',self)
-        self.label_2.move(20, 160)
+        self.label_2.move(20, 210)
         self.label_2.setFont(QtGui.QFont("Helvetica",16))
         #QLabel3
         self.label_3 = QLabel('Until',self)
-        self.label_3.move(20, 240)
+        self.label_3.move(20, 290)
         self.label_3.setFont(QtGui.QFont("Helvetica",16))
         #QLabel4
         self.label_4 = QLabel('Twitter',self)
@@ -110,31 +119,34 @@ class search_finance(QWidget):
         self.label_5 = QLabel('Web Crawler',self)
         self.label_5.move(730, 500)
         self.label_5.setFont(QtGui.QFont("Helvetica",16))
+        #QLabel5
+        self.label_5 = QLabel('Finance',self)
+        self.label_5.move(550, 10)
+        self.label_5.setFont(QtGui.QFont("Helvetica",16))
 
         #creating button QPushButton
-        self.button = QPushButton("Enter",self)
+        self.button = QPushButton("Stock",self)
         self.button.resize(100,30)
-        self.button.move(320,100)
+        self.button.move(390,100)
         self.button.clicked.connect(self.getTextValue)
         self.button.setFont(QtGui.QFont("Helvetica",14))
-
         #creating button QPushButton
-        self.button1 = QPushButton("Back",self)
-        self.button1.resize(200,60)
-        self.button1.move(10,400)
-        self.button1.clicked.connect(self.Back)
+        self.button1 = QPushButton("Search",self)
+        self.button1.resize(100,30)
+        self.button1.move(390,150)
+        self.button1.clicked.connect(self.compare)
         self.button1.setFont(QtGui.QFont("Helvetica",14))
         #creating button QPushButton
-        self.button2 = QPushButton("Compare",self)
+        self.button2 = QPushButton("Back",self)
         self.button2.resize(200,60)
-        self.button2.move(240,400)
-        self.button2.clicked.connect(self.compare)
+        self.button2.move(10,400)
+        self.button2.clicked.connect(self.Back)
         self.button2.setFont(QtGui.QFont("Helvetica",14))
 
         #TextBrower
         self.bro1 = QTextBrowser(self)
         self.bro1.resize(500,500)
-        self.bro1.move(500,0)
+        self.bro1.move(650,0)
         self.bro1.setFont(QtGui.QFont("Helvetica",12))
         #TextBrower
         self.bro2 = QTextBrowser(self)
@@ -165,9 +177,10 @@ class search_finance(QWidget):
         self.dateEdit.setMaximumDate(QtCore.QDate(self.Year,self.Month,self.Day))
         self.dateEdit.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit.setDate(QtCore.QDate(self.Year,self.Month,self.Day-1))
+        self.dateEdit.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit.setCalendarPopup(True)
-        self.dateEdit.resize(150,50)
-        self.dateEdit.move(100,150)
+        self.dateEdit.resize(150,40)
+        self.dateEdit.move(100,210)
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
 
         #DateEdit
@@ -176,8 +189,8 @@ class search_finance(QWidget):
         self.dateEdit1.setMaximumTime(QtCore.QTime(23, 59, 59))
         self.dateEdit1.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit1.setCalendarPopup(True)
-        self.dateEdit1.resize(150,50)
-        self.dateEdit1.move(100,230)
+        self.dateEdit1.resize(150,40)
+        self.dateEdit1.move(100,290)
         self.dateEdit1.setFont(QtGui.QFont("Helvetica",12))
 
 
@@ -247,7 +260,7 @@ class search_finance(QWidget):
     
 
     def compare(self): # Send word to API and Crawler
-        data = self.inputbox.text()
+        data = self.inputbox1.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
         if re.match('[ก-๙]',data) != None: # If word is Thai word 

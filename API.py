@@ -98,8 +98,8 @@ class Twitter_API:
 if __name__ == "__main__":
 
     class Unit_test(unittest.TestCase):
-        def test(self):
-            obj = Twitter_API("covid","en","2021-03-26","2021-03-29");
+        def test_API(self):
+            obj = Twitter_API("คลองสุเอซ","th","2021-03-25","2021-04-01");
             self.assertIsNotNone(obj.search())
 
     unittest.main()
