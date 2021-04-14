@@ -41,11 +41,43 @@ class Progress(QThread): # Class progress bar
 
     def run(self):
         for i in range(100):
-            time.sleep(0.1)
+            time.sleep(0.05)
             self._signal.emit(i)
         self.finised.emit()
 
-class search_finance(QWidget):
+class Finance_thread(QObject):
+
+    finished = pyqtSignal()
+
+    def __init__(self,data,data1,slide,date1,date2):
+        super().__init__()
+        self.data = data
+        self.data = data1
+        self.slide = slide
+        self.date1 = date1
+        self.date2 = date2
+
+    def compare(self): # Send word to API and Crawler
+
+        if re.match('[ก-๙]',self.data) != None: # If word is Thai word 
+            
+            api = Twitter_API(self.data,'th',self.date1,self.date2)
+            api.search()
+            crawler = Search_Crawler()
+            crawler.check_lan(self.data)
+            self.get_time(self.data)
+
+        else: # If word is English word
+            
+            api = Twitter_API(self.data,'en',self.date1,self.date2)
+            api.search()
+            crawler = Search_Crawler()
+            crawler.check_lan(self.data)
+            self.get_time(self.data)
+
+        self.finished.emit()
+
+class Search_finance(QWidget):
 
     switch_window2 = QtCore.pyqtSignal()
 
@@ -56,14 +88,29 @@ class search_finance(QWidget):
 
     def getTextValue(self):
         data = self.inputbox.text()
+        data = self.inputbox1.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
 
+        self.thread = QThread()
+        self.finance = Finance_thread()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.check_search)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        #self.worker.signal.connect(self.Link)
+        self.button.setEnabled(True)
+        self.button3.setEnabled(True)
+        self.thread.start()
+
+
         self.progress = Progress()
         self.progress._signal.connect(self.signal_accept)
-        self.progress.finised.connect(lambda: self.stock(data,date1,date2))
+        self.progress._signal.connect(self.progress.quit)
         self.progress.start()
         self.button.setEnabled(False)
+        self.button3.setEnabled(False)
 
     def Back(self): #Back to Main GUI
         self.switch_window2.emit()
@@ -554,6 +601,6 @@ class search_finance(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    A = search_finance()
+    A = Search_finance()
     A.show_exit()
     sys.exit(app.exec_())

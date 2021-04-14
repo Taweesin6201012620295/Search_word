@@ -12,11 +12,6 @@ from Gui_API import *
 from GUI_Crawler import *
 from GUI_Finance import *
 
-class TestNumber(unittest.TestCase): # Test Unit test
-    def test_main(self):
-        controller = Controller()
-        self.assertIsNotNone(controller)
-
 class Login(QWidget): # Main GUI
 
     switch_window = QtCore.pyqtSignal()
@@ -159,7 +154,7 @@ class Controller: #Class switch window
         self.window_two.show()
 
     def show_window_three(self):
-        self.window_three = search_finance()
+        self.window_three = Search_finance()
         self.window_three.switch_window2.connect(self.close2)
         self.one.close()
         self.window_three.show()

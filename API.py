@@ -101,5 +101,6 @@ if __name__ == "__main__":
         def test_API(self):
             obj = Twitter_API("คลองสุเอซ","th","2021-03-25","2021-04-01");
             self.assertIsNotNone(obj.search())
+            self.assertTrue(obj.write_csv())
 
     unittest.main()
