@@ -176,7 +176,7 @@ class API_thread(QObject): # Class progress bar
         else:
             self.Sentiment_en()
 
-        self.signal2.emit(self.df)
+        self.signal2.emit(self.df.sort_values(by="time"))
 
 
 class tweety_search(QWidget):
@@ -358,11 +358,8 @@ class tweety_search(QWidget):
         self.pbar.setValue(int(msg))
         if self.pbar.value() == 99:
             self.pbar.setValue(0)
-            self.button.setEnabled(True)
-            self.button1.setEnabled(True)
 
     def Link(self,data):
-        self.read_file(data)
         self.read_file_10rank(data)
         self.create_piechart(data)
 
@@ -399,6 +396,9 @@ class tweety_search(QWidget):
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
+
+        self.button.setEnabled(True)
+        self.button1.setEnabled(True)
 
     #time tweet of word
     def read_file(self,query):

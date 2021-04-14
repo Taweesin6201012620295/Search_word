@@ -164,7 +164,7 @@ class Crawler_thread(QObject): # Class progress bar
             self.Sentiment_en()
         print(self.df)
 
-        self.signal2.emit(self.df)
+        self.signal2.emit(self.df.sort_values(by="Posted"))
 
 
 class Crawler_search(QWidget):
@@ -341,7 +341,6 @@ class Crawler_search(QWidget):
             self.pbar.setValue(0)
     
     def Link(self,data):
-        self.read_file(data)
         self.read_file_10rank(data)
     
     def Link2(self,df):
