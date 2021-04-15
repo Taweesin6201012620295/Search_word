@@ -68,7 +68,6 @@ class Crawler_thread(QObject): # Class progress bar
             self.get_time()
 
         else:
-            self.get_time()
             self.signal1.emit(self.data)
             self.get_time()
 
