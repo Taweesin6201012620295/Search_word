@@ -19,15 +19,12 @@ import shutil
 import codecs
 from itertools import chain
 from nltk import NaiveBayesClassifier as nbc
+from geopy.geocoders import Nominatim
+import plotly.express as px
 
 from API import *
 from NLP import *
 from Combine_GUI import*
-
-class TestNumber(unittest.TestCase): # Test Unit test
-    def test_main(self):
-        controller = Controller()
-        self.assertIsNotNone(controller)
 
 class Progress(QThread): # Class progress bar
     
@@ -50,6 +47,7 @@ class API_thread(QObject): # Class progress bar
     signal1 = pyqtSignal(str)
     signal2 = pyqtSignal(object)
     signal3 = pyqtSignal(str,int,int,int,int)
+    signal4 = pyqtSignal(str)
     finished = pyqtSignal()
     
     def __init__(self,data,slide,date1,date2):
@@ -101,7 +99,7 @@ class API_thread(QObject): # Class progress bar
         #print("Total Negative = ", self.neg)
         #print("Total Neutral = ", self.neu)
 
-        self.signal3.emit(self.data,pos,neg,neu)
+        self.signal3.emit(self.data,pos,neg,neu,tol)
 
     #Load Pickel
     def loadData(self):
@@ -148,6 +146,64 @@ class API_thread(QObject): # Class progress bar
 
         self.signal3.emit(self.data,pos,neg,neu,tol)
 
+    def geopy(self):
+
+        geolocator = Nominatim(user_agent="sample app")
+        headers = ['Address', 'Lat', 'Lon']
+        file_name = str(self.data)+'_map.csv'
+
+        for i in self.df['places']:
+            try:
+                if str(i) != 'nan':
+                    data = geolocator.geocode(str(i))
+                    data.raw.get("lat"), data.raw.get("lon")
+                    data.point.latitude, data.point.longitude
+
+                    csvfile = open(file_name, 'r', newline='', encoding='utf-8')
+                    csvfile = open(file_name, 'a', newline='', encoding='utf-8')
+                    writer = csv.DictWriter(csvfile, fieldnames=headers)
+                    article = (i, data.point.latitude, data.point.longitude)
+                    writer.writerow( {'Address':article[0], 'Lat':article[1], 'Lon':article[2]} )
+                    csvfile.close()
+                    print("2")
+
+            except FileNotFoundError:
+                csvfile = open(file_name, 'w', newline='', encoding='utf-8')
+                writer = csv.DictWriter(csvfile, fieldnames=headers)
+                writer.writeheader()
+                article = (i, data.point.latitude, data.point.longitude)
+                writer.writerow( {'Address':article[0], 'Lat':article[1], 'Lon':article[2]} )
+                csvfile.close()
+                print("1")
+
+            except AttributeError:
+                print('3')
+                pass
+        
+        df = pd.read_csv(str(self.data)+'_map.csv')
+        fig = px.scatter_geo(df, 
+                            # longitude is taken from the df["lon"] columns and latitude from df["lat"]
+                            lon="Lon", 
+                            lat="Lat", 
+                            # choose the map chart's projection
+                            projection="natural earth",
+                            # columns which is in bold in the pop up
+                            hover_name = "Address",
+                            # format of the popup not to display these columns' data
+                            hover_data = {"Address":False,
+                                        "Lon": False,
+                                        "Lat": False})
+
+        # scatter_geo allow to change the map date based on the information from the df dataframe, but we can separately specify the values that are common to all
+        # change the size of the markers to 25 and color to red
+        fig.update_traces(marker=dict(size=25, color="red"))
+        # fit the map to surround the points
+        fig.update_geos(fitbounds="locations", showcountries = True)
+        # add title
+        fig.update_layout(title = 'Your customers')
+        fig.write_image(f"C:/Users/Lenovo/Desktop/New folder/{self.data}_map.png")
+        self.signal4.emit(self.data)
+
 
     def get_time(self): # Function Get time from dateEdit
 
@@ -169,12 +225,14 @@ class API_thread(QObject): # Class progress bar
         colume1 = pan['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
         colume2 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume1 & colume2]
-        self.df = pd.DataFrame({'time': between['time'],'tweet': between['tweet']})
+        self.df = pd.DataFrame({'time': between['time'],'tweet': between['tweet'],'places': between['places']})
         print(self.df)
         if re.match('[ก-๙]',self.data) != None:
             self.Sentiment_pickel()
+            self.geopy()
         else:
             self.Sentiment_en()
+            self.geopy()
 
         self.signal2.emit(self.df.sort_values(by="time"))
 
@@ -207,6 +265,7 @@ class tweety_search(QWidget):
         self.worker.signal1.connect(self.Link)
         self.worker.signal2.connect(self.Link2)
         self.worker.signal3.connect(self.Link3)
+        self.worker.signal4.connect(self.Link4)
         self.button.setEnabled(False)
         self.button1.setEnabled(False)
 
@@ -219,7 +278,6 @@ class tweety_search(QWidget):
         self.progress.start()
         self.button.setEnabled(False)
         self.button1.setEnabled(False)
-
 
     def Back(self): #Back to Main GUI
         self.switch_window.emit()
@@ -274,24 +332,24 @@ class tweety_search(QWidget):
         self.label_2.move(20,150)
         self.label_2.setFont(QtGui.QFont("Helvetica",16))
         #QLabel4
-        self.label_5 = QLabel('Results of the tweet you searched',self)
-        self.label_5.move(20,300)
-        self.label_5.setFont(QtGui.QFont("Helvetica",16))
+        self.label_3 = QLabel('Map',self)
+        self.label_3.move(650,470)
+        self.label_3.setFont(QtGui.QFont("Helvetica",16))
         #QLabel5
         self.label_5 = QLabel('Ranking Graph',self)
-        self.label_5.move(800,15)
+        self.label_5.move(650,15)
         self.label_5.setFont(QtGui.QFont("Helvetica",16))
         #QLabel6
         self.label_6 = QLabel('Sentiment',self)
-        self.label_6.move(800,470)
+        self.label_6.move(1300,15)
         self.label_6.setFont(QtGui.QFont("Helvetica",16))
         #QLabel6
         self.label_7 = QLabel('Since',self)
-        self.label_7.move(500,10)
+        self.label_7.move(450,10)
         self.label_7.setFont(QtGui.QFont("Helvetica",16))
         #QLabel6
         self.label_8 = QLabel('Until',self)
-        self.label_8.move(500,150)
+        self.label_8.move(450,150)
         self.label_8.setFont(QtGui.QFont("Helvetica",16))
 
         #ComboBox th and en
@@ -300,31 +358,31 @@ class tweety_search(QWidget):
         self.slide.addItem('en')
         self.slide.move(280,150)
         self.slide.setFont(QtGui.QFont("Helvetica",16))
-        
+
         #TextBrowser
-        #self.bro1 = QTextBrowser(self)
-        #self.bro1.resize(250,30)
-        #self.bro1.move(1320,800)
-        #self.bro1.setFont(QtGui.QFont("Helvetica",12))
+        self.bro1 = QTextBrowser(self)
+        self.bro1.resize(800,450)
+        self.bro1.move(720,460)
+        self.bro1.setFont(QtGui.QFont("Helvetica",12))
         #TextBrowser
         self.bro2 = QTextBrowser(self)
-        self.bro2.resize(250,300)
-        self.bro2.move(1300,50)
+        self.bro2.resize(200,280)
+        self.bro2.move(1100,50)
         self.bro2.setFont(QtGui.QFont("Helvetica",12))
         #TextBrowser
         self.bro3 = QTextBrowser(self)
-        self.bro3.resize(500,400)
-        self.bro3.move(800,50)
+        self.bro3.resize(450,400)
+        self.bro3.move(650,50)
         self.bro3.setFont(QtGui.QFont("Helvetica",12))
         #TextBrower
         self.bro5 = QTextBrowser(self)
-        self.bro5.resize(500,400)
-        self.bro5.move(800,500)
+        self.bro5.resize(450,400)
+        self.bro5.move(1300,50)
         self.bro5.setFont(QtGui.QFont("Helvetica",12))
         #TextBrower
         self.bro6 = QTextBrowser(self)
-        self.bro6.resize(250,300)
-        self.bro6.move(1300,500)
+        self.bro6.resize(230,150)
+        self.bro6.move(1520,450)
         self.bro6.setFont(QtGui.QFont("Helvetica",12))
 
         #DateEdit
@@ -338,7 +396,7 @@ class tweety_search(QWidget):
         self.dateEdit.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit.setCalendarPopup(True)
         self.dateEdit.resize(150,50)
-        self.dateEdit.move(500,50)
+        self.dateEdit.move(450,50)
         self.dateEdit.setFont(QtGui.QFont("Helvetica",12))
         #DateEdit
         self.dateEdit1 = QDateEdit(self)
@@ -347,11 +405,11 @@ class tweety_search(QWidget):
         self.dateEdit1.setDate(QtCore.QDate(2021, 11, 2))
         self.dateEdit1.setCalendarPopup(True)
         self.dateEdit1.resize(150,50)
-        self.dateEdit1.move(500,200)
+        self.dateEdit1.move(450,200)
         self.dateEdit1.setFont(QtGui.QFont("Helvetica",12))
 
         self.view = QTableView(self)
-        self.view.resize(750,500)
+        self.view.resize(600,500)
         self.view.move(10,350)
 
     def signal_accept(self, msg): # Function Progress bar
@@ -368,7 +426,6 @@ class tweety_search(QWidget):
         self.view.setModel(model)
     
     def Link3(self,data,pos,neg,neu,tol):
-        
         se = QPieSeries()
 
         se.append('Positive',int(pos))
@@ -399,6 +456,9 @@ class tweety_search(QWidget):
 
         self.button.setEnabled(True)
         self.button1.setEnabled(True)
+    
+    def Link4(self,name):
+        self.bro1.setStyleSheet(f'border-image:url(C:/Users/Lenovo/Desktop/New folder/{name}_map.png);')
 
     #time tweet of word
     def read_file(self,query):

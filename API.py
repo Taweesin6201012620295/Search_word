@@ -5,8 +5,10 @@ import unittest
 import csv
 import pandas
 from datetime import *
+from geopy.geocoders import Nominatim
 
 class Twitter_API:
+
     def __init__(self,query,lang,since,until):
 
         consumer_key = 'a9H686ql30kmQTdtk5rlMX9fM'

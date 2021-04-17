@@ -18,11 +18,6 @@ from datetime import time
 from Crawler_file1 import *
 from NLP import *
 
-class TestNumber(unittest.TestCase): # Test Unit test
-    def test_main(self):
-        controller = Controller()
-        self.assertIsNotNone(controller)
-
 class Progress(QThread): # Class progress bar
 
     _signal = pyqtSignal(int)
