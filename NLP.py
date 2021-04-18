@@ -10,7 +10,6 @@ import spacy
 from nltk.corpus import stopwords
 import csv
 from spacy.lang.en.stop_words import STOP_WORDS
-from spacy.matcher import *
 from pythainlp import *
 from pythainlp.corpus import*
 import pandas
@@ -96,8 +95,6 @@ class NLP:
         self.check = {}
         self.data = data
         self.docs = self.nlp(self.data)
-        self.hashtag_filter()
-        self.add_filter()
         for word in self.docs:
             self.twitter_check =( word.text[0]!="#"
                                     and word.text[0]!="@"
@@ -112,27 +109,6 @@ class NLP:
             if( self.twitter_check ):
                 self.output.append(word.text)
         return self.output
-
-    #combine # and word
-    def hashtag_filter(self):
-        matcher = Matcher(self.nlp.vocab)
-        pattern = [{'ORTH': '#'}, {'IS_ASCII': True}]
-        matcher.add("HASHTAG", [pattern])
-        matches = matcher(self.docs)
-        spans = []
-        for match_id, start, end in matches:
-            spans.append(self.docs[start:end])
-        for word in self.docs:
-            if( word.text[0]=="#" ):
-                self.output.append(word.text)
-                self.check[word.text] = word.text
-    
-    #combine @ and word
-    def add_filter(self):
-        for word in self.docs:
-            if( word.text[0]=="@" ):
-                self.output.append(word.text)
-                self.check[word.text] = word.text
 
     def merge_noun(self):
         merge_nps = self.nlp.create_pipe("merge_noun_chunks")

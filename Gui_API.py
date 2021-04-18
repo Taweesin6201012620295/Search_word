@@ -41,7 +41,6 @@ class Progress(QThread): # Class progress bar
             time.sleep(0.05)
             self._signal.emit(i)
 
-
 class API_thread(QObject): # Class progress bar
     
     signal1 = pyqtSignal(str)
@@ -58,6 +57,7 @@ class API_thread(QObject): # Class progress bar
         self.date2 = date2
     
     def check_search(self): # Fucntion check search word
+
         pan = pandas.read_csv('file_list_API.csv')
         check = str(self.data)+'.csv'
         store_file = []
@@ -67,14 +67,12 @@ class API_thread(QObject): # Class progress bar
             obj = Twitter_API(self.data,self.slide,self.date1,self.date2)
             obj.search()
             print("This one :"+self.data)
-
             self.obj1 = NLP(self.data,'api')
             self.obj1.save_analysis(self.slide,self.data,'api')
             self.signal1.emit(self.data)
             self.get_time()
 
-        else:
-            self.signal1.emit(self.data)
+        else :
             self.get_time()
 
         self.finished.emit()
@@ -95,9 +93,6 @@ class API_thread(QObject): # Class progress bar
             else:
                 neu = neu + 1
         tol = pos + neg + neu
-        #print("Total Positive = ", self.pos)
-        #print("Total Negative = ", self.neg)
-        #print("Total Neutral = ", self.neu)
 
         self.signal3.emit(self.data,pos,neg,neu,tol)
 
@@ -140,10 +135,6 @@ class API_thread(QObject): # Class progress bar
 
         tol = pos + neg + neu
 
-        print("Total Positive = ", pos)
-        print("Total Negative = ", neg)
-        print("Total Neutral = ", neu)
-
         self.signal3.emit(self.data,pos,neg,neu,tol)
 
     def geopy(self):
@@ -179,30 +170,32 @@ class API_thread(QObject): # Class progress bar
             except AttributeError:
                 print('3')
                 pass
-        
-        df = pd.read_csv(str(self.data)+'_map.csv')
-        fig = px.scatter_geo(df, 
-                            # longitude is taken from the df["lon"] columns and latitude from df["lat"]
-                            lon="Lon", 
-                            lat="Lat", 
-                            # choose the map chart's projection
-                            projection="natural earth",
-                            # columns which is in bold in the pop up
-                            hover_name = "Address",
-                            # format of the popup not to display these columns' data
-                            hover_data = {"Address":False,
-                                        "Lon": False,
-                                        "Lat": False})
+        try:
+            df = pd.read_csv(str(self.data)+'_map.csv')
+            fig = px.scatter_geo(df, 
+                                # longitude is taken from the df["lon"] columns and latitude from df["lat"]
+                                lon="Lon", 
+                                lat="Lat", 
+                                # choose the map chart's projection
+                                projection="natural earth",
+                                # columns which is in bold in the pop up
+                                hover_name = "Address",
+                                # format of the popup not to display these columns' data
+                                hover_data = {"Address":False,
+                                            "Lon": False,
+                                            "Lat": False})
 
-        # scatter_geo allow to change the map date based on the information from the df dataframe, but we can separately specify the values that are common to all
-        # change the size of the markers to 25 and color to red
-        fig.update_traces(marker=dict(size=25, color="red"))
-        # fit the map to surround the points
-        fig.update_geos(fitbounds="locations", showcountries = True)
-        # add title
-        fig.update_layout(title = 'Your customers')
-        fig.write_image(f"C:/Users/Lenovo/Desktop/New folder/{self.data}_map.png")
-        self.signal4.emit(self.data)
+            # scatter_geo allow to change the map date based on the information from the df dataframe, but we can separately specify the values that are common to all
+            # change the size of the markers to 25 and color to red
+            fig.update_traces(marker=dict(size=25, color="red"))
+            # fit the map to surround the points
+            fig.update_geos(fitbounds="locations", showcountries = True)
+            # add title
+            fig.update_layout(title = 'Your customers')
+            fig.write_image(f"C:/Users/Lenovo/Desktop/New folder/{self.data}_map.png")
+            self.signal4.emit(self.data)
+        except FileNotFoundError:
+            pass
 
 
     def get_time(self): # Function Get time from dateEdit
@@ -228,13 +221,15 @@ class API_thread(QObject): # Class progress bar
         self.df = pd.DataFrame({'time': between['time'],'tweet': between['tweet'],'places': between['places']})
         print(self.df)
         if re.match('[ก-๙]',self.data) != None:
+            self.signal1.emit(self.data)
             self.Sentiment_pickel()
+            self.signal2.emit(self.df.sort_values(by="time"))
             self.geopy()
         else:
+            self.signal1.emit(self.data)
             self.Sentiment_en()
+            self.signal2.emit(self.df.sort_values(by="time"))
             self.geopy()
-
-        self.signal2.emit(self.df.sort_values(by="time"))
 
 
 class tweety_search(QWidget):
@@ -248,6 +243,7 @@ class tweety_search(QWidget):
 
     #copy text from line edit
     def getTextValue(self):
+        self.pbar.setValue(10)
         data = self.inputbox.text()
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
@@ -267,17 +263,14 @@ class tweety_search(QWidget):
         self.worker.signal3.connect(self.Link3)
         self.worker.signal4.connect(self.Link4)
         self.button.setEnabled(False)
-        self.button1.setEnabled(False)
 
         self.thread.start()
         self.button.setEnabled(True)
-        self.button1.setEnabled(True)
-        self.progress._signal.connect(self.signal_accept)
+        '''self.progress._signal.connect(self.signal_accept)
         self.progress._signal.connect(self.progress.quit)
+        self.progress.start()'''
 
-        self.progress.start()
         self.button.setEnabled(False)
-        self.button1.setEnabled(False)
 
     def Back(self): #Back to Main GUI
         self.switch_window.emit()
@@ -305,12 +298,12 @@ class tweety_search(QWidget):
         self.button.move(320,100)
         self.button.clicked.connect(self.getTextValue)
         self.button.setFont(QtGui.QFont("Helvetica",14))
-        #creating button QPushButton
+        '''#creating button QPushButton
         self.button1 = QPushButton("Update Datetime",self)
         self.button1.resize(200,40)
         self.button1.move(10,250)
         self.button1.clicked.connect(self.update_time)
-        self.button1.setFont(QtGui.QFont("Helvetica",14))
+        self.button1.setFont(QtGui.QFont("Helvetica",14))'''
         #creating button QPushButton
         self.button3 = QPushButton("Back",self)
         self.button3.resize(150,80)
@@ -412,19 +405,29 @@ class tweety_search(QWidget):
         self.view.resize(600,500)
         self.view.move(10,350)
 
-    def signal_accept(self, msg): # Function Progress bar
+    '''def signal_accept(self, msg): # Function Progress bar
         self.pbar.setValue(int(msg))
         if self.pbar.value() == 99:
-            self.pbar.setValue(0)
+            self.pbar.setValue(0)'''
+    
+    '''def signal_accept(self, msg): # Function Progress bar
+        self.now += int(msg)
+        bar = self.now / self.total*100
+        self.pbar.setValue(bar)
+
+        if self.pbar.value() == 99:
+            self.pbar.setValue(0)'''
 
     def Link(self,data):
         self.read_file_10rank(data)
         self.create_piechart(data)
+        self.pbar.setValue(20)
 
     def Link2(self,df):
         model = pandasModel(df)
         self.view.setModel(model)
-    
+        self.pbar.setValue(80)
+
     def Link3(self,data,pos,neg,neu,tol):
         se = QPieSeries()
 
@@ -453,20 +456,14 @@ class tweety_search(QWidget):
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
-
-        self.button.setEnabled(True)
-        self.button1.setEnabled(True)
+            self.pbar.setValue(60)
     
     def Link4(self,name):
         self.bro1.setStyleSheet(f'border-image:url(C:/Users/Lenovo/Desktop/New folder/{name}_map.png);')
-
-    #time tweet of word
-    def read_file(self,query):
-        pan = pd.read_csv(str(query)+'_Data.csv')
-        df = pd.DataFrame({'time': pan['time'],'tweet': pan['tweet']})
-        model = pandasModel(df)
-        self.view.setModel(model)
-
+        self.pbar.setValue(100)
+        time.sleep(1)
+        self.pbar.setValue(0)
+        self.button.setEnabled(True)
 
     #10 Ranking word
     def read_file_10rank(self,query):
@@ -499,22 +496,14 @@ class tweety_search(QWidget):
         self.savepi.save("C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png", "PNG")
         self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png);')
 
-
-    #update datetime
+    '''#update datetime
     def update_time(self):
-        data = self.inputbox.text()
-        slide = self.slide.currentText()
-        date1 = self.dateEdit.date().toPyDate()
-        date2 = self.dateEdit1.date().toPyDate()
-        obj = Twitter_API(data,slide,date1,date2)
+        obj = Twitter_API(self.data,self.slide,self.date1,self.date2)
         obj.search()
-        obj1 = NLP(data,'api')
-        obj1.save_analysis(slide,data,'api')
-        self.read_file(data)
-        self.read_file_10rank(data)
-        self.create_piechart(data)
-        self.get_time(data)
-
+        obj1 = NLP(self.data,'api')
+        obj1.save_analysis(self.slide,self.data,'api')
+        self.signal1.emit(self.data)
+        self.get_time()'''
 
     #Show and Exit
     def show_exit(self):

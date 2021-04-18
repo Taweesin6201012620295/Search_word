@@ -59,11 +59,9 @@ class Crawler_thread(QObject): # Class progress bar
             print("This one :"+ self.data)
             self.obj1 = NLP(self.data,'crawler')
             self.obj1.save_analysis(self.slide,self.data,'crawler')
-            self.signal1.emit(self.data)
             self.get_time()
 
         else:
-            self.signal1.emit(self.data)
             self.get_time()
 
         self.finished.emit()
@@ -132,7 +130,6 @@ class Crawler_thread(QObject): # Class progress bar
 
     def get_time(self): # Function Get time from dateEdit
 
-
         day_1,day_2 = str(self.date1.day), str(self.date2.day)
         month1,month2 = str(self.date1.month), str(self.date2.month)
         year1, year2 = str(self.date1.year), str(self.date2.year)
@@ -153,12 +150,14 @@ class Crawler_thread(QObject): # Class progress bar
         between = pan[colume1 & colume2]
         self.df = pd.DataFrame({'Posted': between['Posted'],'Description': between['Description'],'Link': between['Link']})
         if re.match('[ก-๙]',self.data) != None:
+            self.signal1.emit(self.data)
             self.sentiment_pickel()
+            self.signal2.emit(self.df.sort_values(by="Posted"))
         else:
+            self.signal1.emit(self.data)
             self.Sentiment_en()
+            self.signal2.emit(self.df.sort_values(by="Posted"))
         print(self.df)
-
-        self.signal2.emit(self.df.sort_values(by="Posted"))
 
 
 class Crawler_search(QWidget):
@@ -172,6 +171,7 @@ class Crawler_search(QWidget):
 
     #copy text from line edit
     def getTextValue(self):
+        self.pbar.setValue(10)
         data = self.inputbox.text()
         slide = self.slide.currentText()
         date1 = self.dateEdit.date().toPyDate()
@@ -188,14 +188,12 @@ class Crawler_search(QWidget):
         self.worker.signal1.connect(self.Link)
         self.worker.signal2.connect(self.Link2)
         self.worker.signal3.connect(self.Link3)
-        self.button.setEnabled(True)
-        self.button3.setEnabled(True)
         self.thread.start()
 
-        self.progress = Progress()
+        '''self.progress = Progress()
         self.progress._signal.connect(self.signal_accept)
         self.progress._signal.connect(self.progress.quit)
-        self.progress.start()
+        self.progress.start()'''
         self.button.setEnabled(False)
         self.button3.setEnabled(False)
 
@@ -329,17 +327,23 @@ class Crawler_search(QWidget):
         self.view.resize(750,500)
         self.view.move(10,350)
 
-    def signal_accept(self, msg): # Function Progress bar
+    '''def signal_accept(self, msg): # Function Progress bar
         self.pbar.setValue(int(msg))
         if self.pbar.value() == 99:
-            self.pbar.setValue(0)
+            self.pbar.setValue(0)'''
     
     def Link(self,data):
         self.read_file_10rank(data)
+        self.pbar.setValue(40)
     
     def Link2(self,df):
         model = pandasModel(df)
         self.view.setModel(model)
+        self.pbar.setValue(100)
+        time.sleep(1)
+        self.pbar.setValue(0)
+        self.button.setEnabled(True)
+        self.button3.setEnabled(True)
     
     def Link3(self,data,pos,neg,neu,tol):
         se = QPieSeries()
@@ -373,8 +377,8 @@ class Crawler_search(QWidget):
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
-        self.button.setEnabled(True)
-        self.button3.setEnabled(True)
+        self.pbar.setValue(80)
+
 
     #Posted Headline and Link of word
     def read_file(self,query):
@@ -411,7 +415,6 @@ class Crawler_search(QWidget):
         self.obj1.save_analysis(slide,data,'crawler')
         self.read_file(data)
         self.read_file_10rank(data)
-        self.get_time(data)
 
 
 class pandasModel(QAbstractTableModel): #Class for creat AbstractTableModel

@@ -57,6 +57,8 @@ class Twitter_API:
                                         result_type=self.result_type,
                                         max_id = str( maxId - 38555555555555 -555555555 - (100000000*Inmediat)),
                                         until = self.until)
+
+                        print(start)
                         start += 1
                         Inmediat +=1
         
@@ -76,12 +78,14 @@ class Twitter_API:
                 start += 1
                 Stop = self.write_csv(data,self.query)
 
-            except IndexError:
+            except:
                 Inmediat +=1
                 start += 1
-                if start >=10:
+                
+                if start >= 10:
                     Stop = False
-
+        print(start)
+        print(len(data))
         self.csvfile.close()
         print("Finish all of tweet are ",start)
         return data
@@ -99,10 +103,11 @@ class Twitter_API:
 
 if __name__ == "__main__":
 
-    class Unit_test(unittest.TestCase):
-        def test_API(self):
-            obj = Twitter_API("คลองสุเอซ","th","2021-03-25","2021-04-01");
-            self.assertIsNotNone(obj.search())
-            self.assertTrue(obj.write_csv())
+    #class Unit_test(unittest.TestCase):
+    #    def test_API(self):
+            obj = Twitter_API("โควิด","th","2021-04-14","2021-04-18");
+            obj.search()
+    #        self.assertIsNotNone(obj.search())
+    #        self.assertTrue(obj.write_csv())
 
-    unittest.main()
+    #unittest.main()
