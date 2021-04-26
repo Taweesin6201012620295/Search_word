@@ -62,7 +62,7 @@ class Login(QWidget): # Main GUI
 
         #set icon window
         self.icon = QtGui.QIcon()
-        self.icon.addPixmap(QtGui.QPixmap("../../Downloads/ms-word.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.icon.addPixmap(QtGui.QPixmap("../../Software/ms-word.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(self.icon)
     
     def Sentiment_th(self,data):

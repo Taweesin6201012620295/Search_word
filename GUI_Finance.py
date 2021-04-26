@@ -107,8 +107,8 @@ class Compare_thread(QObject):
         year1, year2 = str(self.date1.year), str(self.date2.year)
         #print(day_1,month1,year1)
     
-        pan = pandas.read_csv(str(self.data1)+'_Data.csv')
-        pan1 = pandas.read_csv(str(self.data1)+'_crawler.csv',error_bad_lines=False)
+        pan = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(self.data1)+'_Data.csv')
+        pan1 = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\'+ str(self.data1)+'_crawler.csv',error_bad_lines=False)
         if len(day_1) == 1:
             day_1 = '0' + day_1
         if len(day_2) == 1:
@@ -275,6 +275,7 @@ class Search_finance(QWidget):
         self.Creater()
 
     def getTextValue(self):
+        self.pbar.setValue(10)
         data = self.inputbox.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
@@ -289,13 +290,14 @@ class Search_finance(QWidget):
         self.worker.signal.connect(self.plot_stock)
         self.thread.start()
 
-        self.progress = Progress()
+        '''self.progress = Progress()
         self.progress._signal.connect(self.signal_accept)
         self.progress._signal.connect(self.progress.quit)
-        self.progress.start()
+        self.progress.start()'''
         self.button.setEnabled(False)
 
     def Compare(self): # Send word to API and Crawler
+        self.pbar1.setValue(10)
         data1 = self.inputbox1.text()
         date1 = self.dateEdit.date().toPyDate()
         date2 = self.dateEdit1.date().toPyDate()
@@ -311,10 +313,10 @@ class Search_finance(QWidget):
         self.compare.signal2.connect(self.Link2)
         self.thread1.start()
 
-        self.progress = Progress()
+        '''self.progress = Progress()
         self.progress._signal.connect(self.signal_accept)
         self.progress._signal.connect(self.progress.quit)
-        self.progress.start()
+        self.progress.start()'''
         self.button1.setEnabled(False)
 
     def Back(self): #Back to Main GUI
@@ -323,7 +325,7 @@ class Search_finance(QWidget):
     def Creater(self):
         self.setWindowTitle("Finance")
         self.resize(1400,1000)
-        self.move(50,30)
+        self.move(300,30)
 
         #creating box QLineEdit
         self.inputbox = QLineEdit(self)
@@ -339,12 +341,18 @@ class Search_finance(QWidget):
         #creating progress bar
         self.pbar = QProgressBar(self)
         self.pbar.setValue(0)
-        self.pbar.resize(300,30)
-        self.pbar.move(10,350)
+        self.pbar.resize(150,30)
+        self.pbar.move(500,100)
+
+        #creating progress bar
+        self.pbar1 = QProgressBar(self)
+        self.pbar1.setValue(0)
+        self.pbar1.resize(150,30)
+        self.pbar1.move(500,150)
 
         #set icon window
         self.icon = QtGui.QIcon()
-        self.icon.addPixmap(QtGui.QPixmap("../../Downloads/Finance_icon_0919_250x252.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.icon.addPixmap(QtGui.QPixmap("../../Software/Finance_icon_0919_250x252.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(self.icon)
 
         #QLabel1
@@ -445,10 +453,10 @@ class Search_finance(QWidget):
         self.dateEdit1.move(100,290)
         self.dateEdit1.setFont(QtGui.QFont("Helvetica",12))
 
-    def signal_accept(self, msg): # Function Progress bar
+    '''def signal_accept(self, msg): # Function Progress bar
         self.pbar.setValue(int(msg))
         if self.pbar.value() == 99:
-            self.pbar.setValue(0)
+            self.pbar.setValue(0)'''
 
     def Link1(self,data,pos,neg,neu,tol):
         se = QPieSeries()
@@ -471,9 +479,9 @@ class Search_finance(QWidget):
         chartview.setRenderHint(QPainter.Antialiasing)
 
         self.savepi = QPixmap(chartview.grab())
-        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_crawler.png", "PNG")
-        self.bro2.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_crawler.png);')
-        self.button1.setEnabled(True)
+        self.savepi.save("C:/Users/Lenovo/Desktop/csv/Sentiment_crawler.png", "PNG")
+        self.bro2.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/csv/Sentiment_crawler.png);')
+        self.pbar1.setValue(50)
     
     def Link2(self,data,pos,neg,neu,tol):
         se = QPieSeries()
@@ -500,8 +508,11 @@ class Search_finance(QWidget):
         chartview.setRenderHint(QPainter.Antialiasing)
 
         self.savepi = QPixmap(chartview.grab())
-        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png", "PNG")
-        self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png);')
+        self.savepi.save("C:/Users/Lenovo/Desktop/csv/Sentiment_api.png", "PNG")
+        self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/csv/Sentiment_api.png);')
+        self.pbar1.setValue(100)
+        time.sleep(1)
+        self.pbar1.setValue(0)
         self.button1.setEnabled(True)
 
     def plot_stock(self): #Function plot grahp stock
@@ -540,10 +551,14 @@ class Search_finance(QWidget):
 
         plt.legend()
 
-        plt.savefig("C:/Users/Lenovo/Desktop/New folder/stock.png")
+        plt.savefig("C:\\Users\\Lenovo\\Desktop\\csv\\stock.png")
         self.bro1.clear()
-        self.bro1.setStyleSheet('border-image: url(C:/Users/Lenovo/Desktop/New folder/stock.png);')
+        self.bro1.setStyleSheet('border-image: url(C:/Users/Lenovo/Desktop/csv/stock.png);')
+        self.pbar.setValue(100)
+        time.sleep(1)
+        self.pbar.setValue(0)
         self.button.setEnabled(True)
+
 
     def show_exit(self):
         self.show()

@@ -141,7 +141,7 @@ class API_thread(QObject): # Class progress bar
 
         geolocator = Nominatim(user_agent="sample app")
         headers = ['Address', 'Lat', 'Lon']
-        file_name = str(self.data)+'_map.csv'
+        file_name = 'C:\\Users\\Lenovo\\Desktop\\csv\\' + str(self.data)+'_map.csv'
 
         for i in self.df['places']:
             try:
@@ -171,7 +171,7 @@ class API_thread(QObject): # Class progress bar
                 print('3')
                 pass
         try:
-            df = pd.read_csv(str(self.data)+'_map.csv')
+            df = pd.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(self.data)+'_map.csv')
             fig = px.scatter_geo(df, 
                                 # longitude is taken from the df["lon"] columns and latitude from df["lat"]
                                 lon="Lon", 
@@ -192,7 +192,7 @@ class API_thread(QObject): # Class progress bar
             fig.update_geos(fitbounds="locations", showcountries = True)
             # add title
             fig.update_layout(title = 'Your customers')
-            fig.write_image(f"C:/Users/Lenovo/Desktop/New folder/{self.data}_map.png")
+            fig.write_image(f"C:/Users/Lenovo/Desktop/csv/{self.data}_map.png")
             self.signal4.emit(self.data)
         except FileNotFoundError:
             pass
@@ -205,7 +205,7 @@ class API_thread(QObject): # Class progress bar
         year1, year2 = str(self.date1.year), str(self.date2.year)
         #print(day_1,month1,year1)
     
-        pan = pandas.read_csv(str(self.data)+'_Data.csv')
+        pan = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(self.data)+'_Data.csv')
         if len(day_1) == 1:
             day_1 = '0' + day_1
         if len(day_2) == 1:
@@ -313,7 +313,7 @@ class tweety_search(QWidget):
 
         #set icon window
         self.icon = QtGui.QIcon()
-        self.icon.addPixmap(QtGui.QPixmap("../../Downloads/logo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.icon.addPixmap(QtGui.QPixmap("../../Software/logo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(self.icon)
 
         #QLabel1
@@ -414,7 +414,6 @@ class tweety_search(QWidget):
         self.now += int(msg)
         bar = self.now / self.total*100
         self.pbar.setValue(bar)
-
         if self.pbar.value() == 99:
             self.pbar.setValue(0)'''
 
@@ -449,17 +448,16 @@ class tweety_search(QWidget):
         chartview.setRenderHint(QPainter.Antialiasing)
 
         self.savepi = QPixmap(chartview.grab())
-        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png", "PNG")
-        self.bro5.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png);')
+        self.savepi.save("C:/Users/Lenovo/Desktop/csv/Sentiment_api.png", "PNG")
+        self.bro5.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/csv/Sentiment_api.png);')
 
         with open(str(data)+'_api_sentiment.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
-            self.pbar.setValue(60)
-    
+
     def Link4(self,name):
-        self.bro1.setStyleSheet(f'border-image:url(C:/Users/Lenovo/Desktop/New folder/{name}_map.png);')
+        self.bro1.setStyleSheet(f'border-image:url(C:/Users/Lenovo/Desktop/csv/{name}_map.png);')
         self.pbar.setValue(100)
         time.sleep(1)
         self.pbar.setValue(0)
@@ -468,7 +466,7 @@ class tweety_search(QWidget):
     #10 Ranking word
     def read_file_10rank(self,query):
         self.dic10={}
-        df = pandas.read_csv(str(query)+'_NLP.csv')
+        df = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\'+ str(query)+'_NLP.csv')
         for colume in df:
             self.dic10[colume]=[]
             for data in df[colume]:
@@ -480,7 +478,7 @@ class tweety_search(QWidget):
 
     #show Graph ranking by pyqchart
     def create_piechart(self,data):
-        pan = pandas.read_csv(str(data)+'_NLP.csv')
+        pan = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\'+ str(data)+'_NLP.csv')
         se = QPieSeries()
         for i,j in zip(pan['10 ranking'],pan['number']):
             se.append(i,int(j))
@@ -493,8 +491,8 @@ class tweety_search(QWidget):
         chartview.setRenderHint(QPainter.Antialiasing)
 
         self.savepi = QPixmap(chartview.grab())
-        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png", "PNG")
-        self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/10_Rank_API.png);')
+        self.savepi.save("C:/Users/Lenovo/Desktop/Software/10_Rank_API.png", "PNG")
+        self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/Software/10_Rank_API.png);')
 
     '''#update datetime
     def update_time(self):

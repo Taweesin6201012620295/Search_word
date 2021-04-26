@@ -55,13 +55,18 @@ class Crawler_thread(QObject): # Class progress bar
             store_file.append(i)
         if check not in store_file: 
             crawler = Search_Crawler()
-            crawler.check_lan(self.data)
+            crawler.search(self.data,self.date1,self.date2)
             print("This one :"+ self.data)
             self.obj1 = NLP(self.data,'crawler')
             self.obj1.save_analysis(self.slide,self.data,'crawler')
             self.get_time()
 
         else:
+            crawler = Search_Crawler()
+            crawler.search(self.data,self.date1,self.date2)
+            print("This one :"+ self.data)
+            self.obj1 = NLP(self.data,'crawler')
+            self.obj1.save_analysis(self.slide,self.data,'crawler')
             self.get_time()
 
         self.finished.emit()
@@ -72,7 +77,7 @@ class Crawler_thread(QObject): # Class progress bar
         pos = 0
         neg = 0
         neu = 0
-        for tweet in self.df['Description']:
+        for tweet in self.df['head_news']:
             analysis = TextBlob(tweet)
             if analysis.sentiment[0]>0:
                 pos = pos +1
@@ -103,7 +108,7 @@ class Crawler_thread(QObject): # Class progress bar
         neg = 0
         neu = 0
 
-        for data in self.df['Description']:
+        for data in self.df['head_news']:
 
             words = thai_stopwords()
             V = []
@@ -135,7 +140,7 @@ class Crawler_thread(QObject): # Class progress bar
         year1, year2 = str(self.date1.year), str(self.date2.year)
         #print(day_1,month1,year1)
     
-        pan = pandas.read_csv(str(self.data)+'_crawler.csv',error_bad_lines=False)
+        pan = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(self.data)+'_crawler.csv',error_bad_lines=False)
         if len(day_1) == 1:
             day_1 = '0' + day_1
         if len(day_2) == 1:
@@ -145,18 +150,18 @@ class Crawler_thread(QObject): # Class progress bar
         if len(month2) == 1:
             month2 = '0' + month2
 
-        colume1 = pan['Posted'] >= f'{year1}-{month1}-{day_1} 00:00:00'
-        colume2 = pan['Posted'] <= f'{year2}-{month2}-{day_2} 23:59:59'
+        colume1 = pan['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
+        colume2 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume1 & colume2]
-        self.df = pd.DataFrame({'Posted': between['Posted'],'Description': between['Description'],'Link': between['Link']})
+        self.df = pd.DataFrame({'time': between['time'],'head_news': between['head_news'],'main_link': between['main_link']})
         if re.match('[ก-๙]',self.data) != None:
             self.signal1.emit(self.data)
             self.sentiment_pickel()
-            self.signal2.emit(self.df.sort_values(by="Posted"))
+            self.signal2.emit(self.df.sort_values(by="time"))
         else:
             self.signal1.emit(self.data)
             self.Sentiment_en()
-            self.signal2.emit(self.df.sort_values(by="Posted"))
+            self.signal2.emit(self.df.sort_values(by="time"))
         print(self.df)
 
 
@@ -190,12 +195,7 @@ class Crawler_search(QWidget):
         self.worker.signal3.connect(self.Link3)
         self.thread.start()
 
-        '''self.progress = Progress()
-        self.progress._signal.connect(self.signal_accept)
-        self.progress._signal.connect(self.progress.quit)
-        self.progress.start()'''
         self.button.setEnabled(False)
-        self.button3.setEnabled(False)
 
     def Back(self): #Back to Main GUI
         self.switch_window1.emit()
@@ -230,21 +230,10 @@ class Crawler_search(QWidget):
         self.button2.move(1600,800)
         self.button2.clicked.connect(self.Back)
         self.button2.setFont(QtGui.QFont("Helvetica",14))
-        #creating button QPushButton
-        self.button3 = QPushButton("Update Datetime",self)
-        self.button3.resize(200,40)
-        self.button3.move(10,250)
-        self.button3.clicked.connect(self.update_time)
-        self.button3.setFont(QtGui.QFont("Helvetica",14))
-        #creating button QPushButton
-        self.button4 = QPushButton("Compare",self)
-        self.button4.resize(150,80)
-        self.button4.move(1600,100)
-        self.button4.setFont(QtGui.QFont("Helvetica",14))
 
         #set icon window
         self.icon = QtGui.QIcon()
-        self.icon.addPixmap(QtGui.QPixmap("../../Downloads/web-icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.icon.addPixmap(QtGui.QPixmap("../../Software/web-icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(self.icon)
 
         #QLabel1
@@ -343,7 +332,6 @@ class Crawler_search(QWidget):
         time.sleep(1)
         self.pbar.setValue(0)
         self.button.setEnabled(True)
-        self.button3.setEnabled(True)
     
     def Link3(self,data,pos,neg,neu,tol):
         se = QPieSeries()
@@ -370,27 +358,19 @@ class Crawler_search(QWidget):
         chartview.setRenderHint(QPainter.Antialiasing)
 
         self.savepi = QPixmap(chartview.grab())
-        self.savepi.save("C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png", "PNG")
-        self.bro4.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/New folder/Sentiment_api.png);')
+        self.savepi.save("C:/Users/Lenovo/Desktop/Software/Sentiment_api.png", "PNG")
+        self.bro4.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/Software/Sentiment_api.png);')
 
-        with open(str(data)+'_crawler_sentiment.csv', 'w', newline='', encoding='utf-8') as f:
+        with open('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(data)+'_crawler_sentiment.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['pos','neg','neu'])
             writer.writerow([pos,neg,neu])
         self.pbar.setValue(80)
-
-
-    #Posted Headline and Link of word
-    def read_file(self,query):
-        pan = pd.read_csv(str(query)+'_crawler.csv',error_bad_lines=False)
-        df = pd.DataFrame({'Posted': pan['Posted'],'Headline': pan['Headline'],'Link': pan['Link']})
-        model = pandasModel(df)
-        self.view.setModel(model)
     
     #10 Ranking word
     def read_file_10rank(self,query):
         self.dic10={}
-        df = pandas.read_csv(str(query)+'_NLP_crawler.csv')
+        df = pandas.read_csv('C:\\Users\\Lenovo\\Desktop\\csv\\' + str(query)+'_NLP_crawler.csv')
         for colume in df:
             self.dic10[colume]=[]
             for data in df[colume]:
@@ -403,18 +383,6 @@ class Crawler_search(QWidget):
 
     def show_exit(self):
         self.show()
-
-
-    def update_time(self): # Function Update time
-        data = self.inputbox.text()
-        slide = self.slide.currentText()
-        crawler = Search_Crawler()
-        crawler.check_lan(data)
-        print("This one :"+ data)
-        self.obj1 = NLP(data,'crawler')
-        self.obj1.save_analysis(slide,data,'crawler')
-        self.read_file(data)
-        self.read_file_10rank(data)
 
 
 class pandasModel(QAbstractTableModel): #Class for creat AbstractTableModel

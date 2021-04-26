@@ -24,21 +24,21 @@ class NLP:
     def __init__(self,query,api):
         if api == "api":
             #Build file csv 
-            self.csvfile_input = open(str(query)+'_Data.csv', 'r',newline='', encoding="utf-8")
+            self.csvfile_input = open('C:\\Users\\Lenovo\\Desktop\\csv\\'+str(query)+'_Data.csv', 'r',newline='', encoding="utf-8")
             self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
             
             fieldnames = ['10 ranking','number']
-            self.csvfile_output = open(str(query)+'_NLP.csv', 'w', newline='', encoding="utf-8")
+            self.csvfile_output = open('C:\\Users\\Lenovo\\Desktop\\csv\\'+str(query)+'_NLP.csv', 'w', newline='', encoding="utf-8")
             self.writer_output = csv.DictWriter( self.csvfile_output, fieldnames=fieldnames )
             self.writer_output.writeheader()
 
         else:
             #Build file csv 
-            self.csvfile_input = open(str(query)+'_crawler.csv', 'r',newline='', encoding="utf-8")
+            self.csvfile_input = open('C:\\Users\\Lenovo\\Desktop\\csv\\'+str(query)+'_crawler.csv', 'r',newline='', encoding="utf-8")
             self.csv_reader = csv.reader(self.csvfile_input, delimiter=',')
             
             fieldnames = ['10 ranking','number']
-            self.csvfile_output = open(str(query)+'_NLP_crawler.csv', 'w', newline='', encoding="utf-8")
+            self.csvfile_output = open('C:\\Users\\Lenovo\\Desktop\\csv\\'+str(query)+'_NLP_crawler.csv', 'w', newline='', encoding="utf-8")
             self.writer_output = csv.DictWriter( self.csvfile_output, fieldnames=fieldnames )
             self.writer_output.writeheader()
 
@@ -54,6 +54,7 @@ class NLP:
                     temp = self.analyze_word_th(row[2],data)
                 elif(lang == "en"):
                     temp = self.analyze_word_en(row[2],data)
+
                 for i in temp:
                     message = i.lower()
                     if( message not in dict_temp ):
@@ -149,7 +150,7 @@ class NLP:
             file_name = 'file_list_Crawler.csv'
 
         try:
-            csvfile = open(file_name, 'r',encoding='utf-8')
+            csvfile = open(file_name, 'r', encoding="utf8")
             reader = csv.reader(csvfile, delimiter=',') # Checkink NotFoundError 
 
             tempfile = NamedTemporaryFile(mode='w', delete=False, newline='',encoding='utf-8')
@@ -176,11 +177,11 @@ class NLP:
             shutil.move(tempfile.name, file_name)
 
         except FileNotFoundError:
-            csvfile = open(file_name, 'w', newline='')
+            csvfile = open(file_name, 'w', newline='', encoding="utf8")
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writeheader()
             
-            csvfile = open(file_name, 'a', newline='')
+            csvfile = open(file_name, 'a', newline='', encoding="utf8")
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writerow( {'update_time':date_time, 'file_name':str(data)+'.csv'} )
             csvfile.close()
@@ -189,8 +190,8 @@ if __name__ == "__main__":
     
     class Unit_test(unittest.TestCase):
         def test_NLP(self):
-            obj = NLP('God','crawler')
-            obj.save_analysis('en','God','crawler')
+            obj = NLP('โควิด19','api')
+            obj.save_analysis('th','โควิด19','api')
             self.assertIsNotNone(obj)
 
     #start = time.time()

@@ -1,4 +1,4 @@
-  # Refference https://www.youtube.com/watch?v=ae62pHnBdAg&ab_channel=BorntoDev
+ # Refference https://www.youtube.com/watch?v=ae62pHnBdAg&ab_channel=BorntoDev
 
 import tweepy
 import unittest
@@ -30,7 +30,7 @@ class Twitter_API:
         
         # Write file .csv for checking and record infor
         fieldnames = ['time', 'places', 'tweet']
-        self.csvfile = open(str(query)+'_Data.csv', 'a', newline='', encoding="utf-8")
+        self.csvfile = open('C:\\Users\\Lenovo\\Desktop\\csv\\'+ str(query)+'_Data.csv', 'a', newline='', encoding="utf-8")
         self.writer = csv.DictWriter( self.csvfile, fieldnames=fieldnames )
         self.writer.writeheader()
 
@@ -85,7 +85,6 @@ class Twitter_API:
                 if start >= 10:
                     Stop = False
         print(start)
-        print(len(data))
         self.csvfile.close()
         print("Finish all of tweet are ",start)
         return data
@@ -103,11 +102,11 @@ class Twitter_API:
 
 if __name__ == "__main__":
 
-    #class Unit_test(unittest.TestCase):
-    #    def test_API(self):
-            obj = Twitter_API("โควิด","th","2021-04-14","2021-04-18");
-            obj.search()
-    #        self.assertIsNotNone(obj.search())
-    #        self.assertTrue(obj.write_csv())
+    class Unit_test(unittest.TestCase):
+        def test_API(self):
+            obj = Twitter_API("covid","en","2021-04-15","2021-04-22")
+            #obj.search()
+            self.assertIsNotNone(obj.search())
+            #self.assertTrue(obj.write_csv())
 
-    #unittest.main()
+    unittest.main()
