@@ -87,7 +87,6 @@ class Twitter_API:
         print(start)
         self.csvfile.close()
         print("Finish all of tweet are ",start)
-        return data
 
     #Write file csv
     def write_csv(self, data,query):
@@ -102,11 +101,5 @@ class Twitter_API:
 
 if __name__ == "__main__":
 
-    class Unit_test(unittest.TestCase):
-        def test_API(self):
-            obj = Twitter_API("covid","en","2021-04-15","2021-04-22")
-            #obj.search()
-            self.assertIsNotNone(obj.search())
-            #self.assertTrue(obj.write_csv())
-
-    unittest.main()
+    obj = Twitter_API("covid","en","2021-04-15","2021-04-22")
+    obj.search()

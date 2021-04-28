@@ -48,26 +48,13 @@ class Crawler_thread(QObject): # Class progress bar
         self.date2 = date2
     
     def check_search(self): # Fucntion check search word
-        pan = pandas.read_csv('file_list_Crawler.csv')
-        check = str(self.data)+'.csv'
-        store_file = []
-        for i in pan['file_name']: #Check word search in file_list_Crawler
-            store_file.append(i)
-        if check not in store_file: 
-            crawler = Search_Crawler()
-            crawler.search(self.data,self.date1,self.date2)
-            print("This one :"+ self.data)
-            self.obj1 = NLP(self.data,'crawler')
-            self.obj1.save_analysis(self.slide,self.data,'crawler')
-            self.get_time()
-
-        else:
-            crawler = Search_Crawler()
-            crawler.search(self.data,self.date1,self.date2)
-            print("This one :"+ self.data)
-            self.obj1 = NLP(self.data,'crawler')
-            self.obj1.save_analysis(self.slide,self.data,'crawler')
-            self.get_time()
+        
+        crawler = Search_Crawler()
+        crawler.search(self.data,self.date1,self.date2)
+        print("This one :"+ self.data)
+        self.obj1 = NLP(self.data,'crawler')
+        self.obj1.save_analysis(self.slide,self.data,'crawler')
+        self.get_time()
 
         self.finished.emit()
     #Sentiment English

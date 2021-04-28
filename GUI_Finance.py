@@ -87,7 +87,7 @@ class Compare_thread(QObject):
             api = Twitter_API(self.data1,'th',self.date1,self.date2)
             api.search()
             crawler = Search_Crawler()
-            crawler.check_lan(self.data1)
+            crawler.search(self.data1,self.date1,self.date2)
             self.get_time()
 
         else: # If word is English word
@@ -95,7 +95,7 @@ class Compare_thread(QObject):
             api = Twitter_API(self.data1,'en',self.date1,self.date2)
             api.search()
             crawler = Search_Crawler()
-            crawler.check_lan(self.data1)
+            crawler.search(self.data1,self.date1,self.date2)
             self.get_time()
 
         self.finished.emit()
@@ -122,12 +122,12 @@ class Compare_thread(QObject):
         colume1 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume & colume1]
         
-        colume2 = pan1['Posted'] >= f'{year1}-{month1}-{day_1} 00:00:00'
-        colume3 = pan1['Posted'] <= f'{year2}-{month2}-{day_2} 23:59:59'
+        colume2 = pan1['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
+        colume3 = pan1['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between1 = pan1[colume2 & colume3]
 
         self.df = pd.DataFrame({'time': between['time'],'tweet': between['tweet']})
-        self.df1 = pd.DataFrame({'time': between1['Posted'],'tweet': between1['Description']})
+        self.df1 = pd.DataFrame({'time': between1['Posted'],'tweet': between1['head_news']})
 
         print(self.df)
         print(self.df1)
@@ -453,10 +453,6 @@ class Search_finance(QWidget):
         self.dateEdit1.move(100,290)
         self.dateEdit1.setFont(QtGui.QFont("Helvetica",12))
 
-    '''def signal_accept(self, msg): # Function Progress bar
-        self.pbar.setValue(int(msg))
-        if self.pbar.value() == 99:
-            self.pbar.setValue(0)'''
 
     def Link1(self,data,pos,neg,neu,tol):
         se = QPieSeries()
@@ -545,7 +541,7 @@ class Search_finance(QWidget):
         # python_candlestick_chart.py
 
         ohlc['SMA5'] = ohlc['Close'].rolling(5).mean()
-        ax.plot(ohlc['Date'], ohlc['SMA5'], color='green', label='SMA5')
+        ax.plot(ohlc['Date'], ohlc['SMA5'], color = 'green', label = 'SMA5')
 
         fig.suptitle('Daily Candlestick Chart of NIFTY50 with SMA5')
 
