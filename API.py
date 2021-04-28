@@ -18,7 +18,7 @@ class Twitter_API:
 
         self.query = query
         self.lang = lang
-        self.count = 100
+        self.count = 50
         self.since = datetime.strptime(str(since) + " 00:00:00","%Y-%m-%d %H:%M:%S")
         until = datetime.strptime(str(until),"%Y-%m-%d") + timedelta(days = 1)
         self.until = str(until).split(" ")[0]

@@ -111,10 +111,11 @@ class API_thread(QObject): # Class progress bar
         neg = 0
         neu = 0
 
+        words = thai_stopwords()
+
         for tweet in self.df['tweet']:
 
             data = tweet
-            words = thai_stopwords()
             V = []
             data = re.sub("[0-9]",'',data)
             data = re.sub("[a-z A-Z]",'',data)
@@ -266,9 +267,6 @@ class tweety_search(QWidget):
 
         self.thread.start()
         self.button.setEnabled(True)
-        '''self.progress._signal.connect(self.signal_accept)
-        self.progress._signal.connect(self.progress.quit)
-        self.progress.start()'''
 
         self.button.setEnabled(False)
 
@@ -298,12 +296,7 @@ class tweety_search(QWidget):
         self.button.move(320,100)
         self.button.clicked.connect(self.getTextValue)
         self.button.setFont(QtGui.QFont("Helvetica",14))
-        '''#creating button QPushButton
-        self.button1 = QPushButton("Update Datetime",self)
-        self.button1.resize(200,40)
-        self.button1.move(10,250)
-        self.button1.clicked.connect(self.update_time)
-        self.button1.setFont(QtGui.QFont("Helvetica",14))'''
+
         #creating button QPushButton
         self.button3 = QPushButton("Back",self)
         self.button3.resize(150,80)
@@ -405,18 +398,6 @@ class tweety_search(QWidget):
         self.view.resize(600,500)
         self.view.move(10,350)
 
-    '''def signal_accept(self, msg): # Function Progress bar
-        self.pbar.setValue(int(msg))
-        if self.pbar.value() == 99:
-            self.pbar.setValue(0)'''
-    
-    '''def signal_accept(self, msg): # Function Progress bar
-        self.now += int(msg)
-        bar = self.now / self.total*100
-        self.pbar.setValue(bar)
-        if self.pbar.value() == 99:
-            self.pbar.setValue(0)'''
-
     def Link(self,data):
         self.read_file_10rank(data)
         self.create_piechart(data)
@@ -493,15 +474,6 @@ class tweety_search(QWidget):
         self.savepi = QPixmap(chartview.grab())
         self.savepi.save("C:/Users/Lenovo/Desktop/Software/10_Rank_API.png", "PNG")
         self.bro3.setStyleSheet('border-image:url(C:/Users/Lenovo/Desktop/Software/10_Rank_API.png);')
-
-    '''#update datetime
-    def update_time(self):
-        obj = Twitter_API(self.data,self.slide,self.date1,self.date2)
-        obj.search()
-        obj1 = NLP(self.data,'api')
-        obj1.save_analysis(self.slide,self.data,'api')
-        self.signal1.emit(self.data)
-        self.get_time()'''
 
     #Show and Exit
     def show_exit(self):

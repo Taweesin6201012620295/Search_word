@@ -21,7 +21,6 @@ from API import Twitter_API
 from NLP import *
 
 from Crawler_file1 import *
-
 from Combine_GUI import*
 
 class Progress(QThread): # Class progress bar
@@ -127,7 +126,7 @@ class Compare_thread(QObject):
         between1 = pan1[colume2 & colume3]
 
         self.df = pd.DataFrame({'time': between['time'],'tweet': between['tweet']})
-        self.df1 = pd.DataFrame({'time': between1['Posted'],'tweet': between1['head_news']})
+        self.df1 = pd.DataFrame({'time': between1['time'],'tweet': between1['head_news']})
 
         print(self.df)
         print(self.df1)
@@ -290,10 +289,6 @@ class Search_finance(QWidget):
         self.worker.signal.connect(self.plot_stock)
         self.thread.start()
 
-        '''self.progress = Progress()
-        self.progress._signal.connect(self.signal_accept)
-        self.progress._signal.connect(self.progress.quit)
-        self.progress.start()'''
         self.button.setEnabled(False)
 
     def Compare(self): # Send word to API and Crawler
@@ -313,10 +308,6 @@ class Search_finance(QWidget):
         self.compare.signal2.connect(self.Link2)
         self.thread1.start()
 
-        '''self.progress = Progress()
-        self.progress._signal.connect(self.signal_accept)
-        self.progress._signal.connect(self.progress.quit)
-        self.progress.start()'''
         self.button1.setEnabled(False)
 
     def Back(self): #Back to Main GUI

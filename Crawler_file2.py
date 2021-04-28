@@ -37,21 +37,6 @@ class websites_crawler:
         self.writer.writeheader()
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        '''url_en_file = open("100 Web en.txt", "r")
-        url_th_file = open("100 Web th.txt", "r")
-        url_all_link = open("100_Link.txt", "r")
-
-        th_url = []
-        en_url = []
-
-        for lib in url_en_file:
-            en_url.append(lib.split("\n")[0])
-
-        for lib in url_th_file:
-            th_url.append(lib.split("\n")[0])
-
-        #self.main_url = th_url + en_url'''
-
         url_all_link = open("100_Link.txt", "r")
         all_url = []
 
@@ -60,11 +45,6 @@ class websites_crawler:
 
         self.main_url = all_url
 
-        '''for news in th_url :
-            self.news_writer.writerow( { 'thai': news } )
-
-        for news in en_url :
-            self.news_writer.writerow( { 'global': news } )'''
 
         for news in all_url :
             self.news_writer.writerow( { 'All': news } )
@@ -72,12 +52,6 @@ class websites_crawler:
         self.name_link.close()
 
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        '''for link in en_url :
-            self.domain_en.append(link.split("/")[2])
-
-        for link in th_url :
-            self.domain_th.append(link.split("/")[2])'''
 
         for link in all_url :
             self.domain_th.append(link.split("/")[2])
@@ -102,7 +76,9 @@ class websites_crawler:
 
     def concurrent_futures(self, func, arg1, arg2, arg3):
         threads = min(self.max_thread, len(arg1))
-            
+        if threads <= 0:
+            threads += 1
+
         r = None
         with concurrent.futures.ThreadPoolExecutor(max_workers = threads) as executor:
             for i in executor.map(func, arg1, arg2, arg3):
@@ -196,7 +172,10 @@ class websites_crawler:
                 print("TooManyRedirects",link)
                 return "No"
             except requests.exceptions.InvalidSchema:
-                print("TooManyRedirects",link)
+                print("InvalidSchema",link)
+                return "No"
+            except requests.exceptions.ChunkedEncodingError:
+                print("ChunkedEncodingError",link)
                 return "No"
             # ----------------------------------------------------------------
 

@@ -64,7 +64,7 @@ class Crawler_thread(QObject): # Class progress bar
         pos = 0
         neg = 0
         neu = 0
-        for tweet in self.df['head_news']:
+        for tweet in self.df['content'].dropna():
             analysis = TextBlob(tweet)
             if analysis.sentiment[0]>0:
                 pos = pos +1
@@ -95,12 +95,12 @@ class Crawler_thread(QObject): # Class progress bar
         neg = 0
         neu = 0
 
-        for data in self.df['head_news']:
+        for data in self.df['content'].dropna():
 
             words = thai_stopwords()
             V = []
-            data = re.sub("[0-9]",'',data)
-            data = re.sub("[a-z A-Z]",'',data)
+            data = re.sub("[0-9]",'',str(data))
+            data = re.sub("[a-z A-Z]",'',str(data))
             nlp = word_tokenize(data , engine='newmm',keep_whitespace=False)
             nlp1 = [data for data in nlp if data not in words]
             for i in nlp1:
@@ -140,7 +140,7 @@ class Crawler_thread(QObject): # Class progress bar
         colume1 = pan['time'] >= f'{year1}-{month1}-{day_1} 00:00:00'
         colume2 = pan['time'] <= f'{year2}-{month2}-{day_2} 23:59:59'
         between = pan[colume1 & colume2]
-        self.df = pd.DataFrame({'time': between['time'],'head_news': between['head_news'],'main_link': between['main_link']})
+        self.df = pd.DataFrame({'time': between['time'],'content': between['content'],'main_link': between['main_link']})
         if re.match('[ก-๙]',self.data) != None:
             self.signal1.emit(self.data)
             self.sentiment_pickel()
@@ -303,11 +303,6 @@ class Crawler_search(QWidget):
         self.view.resize(750,500)
         self.view.move(10,350)
 
-    '''def signal_accept(self, msg): # Function Progress bar
-        self.pbar.setValue(int(msg))
-        if self.pbar.value() == 99:
-            self.pbar.setValue(0)'''
-    
     def Link(self,data):
         self.read_file_10rank(data)
         self.pbar.setValue(40)
